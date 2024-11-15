@@ -12,9 +12,12 @@ class TicTacToe {
             player2: 0,
             draws: 0
         };
+        this.selectedAvatar = null;
+        this.playerColor = '#6366f1';
 
         this.initializeElements();
         this.attachEventListeners();
+        this.initializeSidebar();
     }
 
     initializeElements() {
@@ -62,7 +65,11 @@ class TicTacToe {
                 players: {
                     player1: {
                         name: playerName,
-                        symbol: 'X'
+                        symbol: 'X',
+                        customization: {
+                            avatar: this.selectedAvatar,
+                            color: this.playerColor
+                        }
                     }
                 },
                 board: Array(9).fill(''),
@@ -117,7 +124,11 @@ class TicTacToe {
                     ...game.players,
                     player2: {
                         name: playerName,
-                        symbol: 'O'
+                        symbol: 'O',
+                        customization: {
+                            avatar: this.selectedAvatar,
+                            color: this.playerColor
+                        }
                     }
                 }
             });
@@ -171,11 +182,25 @@ class TicTacToe {
 
         this.isMyTurn = this.gameState.currentTurn === this.playerId;
 
-        const player1Name = this.gameState.players.player1.name;
-        const player2Name = this.gameState.players.player2?.name || 'Waiting...';
+        ['player1', 'player2'].forEach(playerId => {
+            const playerEl = document.getElementById(playerId);
+            const playerData = this.gameState.players[playerId];
 
-        this.player1.textContent = `${player1Name} (X)`;
-        this.player2.textContent = `${player2Name} (O)`;
+            if (playerData) {
+                const customization = playerData.customization || {};
+                const name = playerData.name;
+                const symbol = playerData.symbol;
+
+                playerEl.innerHTML = `
+                    ${customization.avatar ? `<img src="assets/${customization.avatar}" alt="${name}" class="player-avatar">` : ''}
+                    <span>${name} (${symbol})</span>
+                `;
+
+                if (customization.color) {
+                    playerEl.style.setProperty('--player-color', customization.color);
+                }
+            }
+        });
     }
 
     async makeMove(index) {
@@ -304,6 +329,79 @@ class TicTacToe {
             root.setAttribute('data-theme', 'light');
             this.themeToggle.textContent = '🌙';
         }
+    }
+
+    initializeSidebar() {
+        const sidebarToggle = document.querySelector('.sidebar-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+
+        if (!sidebarToggle || !sidebar || !overlay) return;
+
+        // Toggle sidebar and overlay
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+
+        // Close sidebar when clicking overlay
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+
+        const avatarGrid = document.querySelector('.avatar-grid');
+        const avatars = [
+            { name: 'avatar1.png', label: 'Default' },
+            { name: 'avatar2.png', label: 'Cool' },
+            { name: 'avatar3.png', label: 'Funny' },
+            { name: 'avatar4.png', label: 'Serious' }
+        ];
+
+        if (!avatarGrid) return;
+        avatarGrid.innerHTML = '';
+
+        avatars.forEach(avatar => {
+            const avatarItem = document.createElement('div');
+            avatarItem.className = 'avatar-item';
+            avatarItem.innerHTML = `
+                <img src="assets/${avatar.name}" alt="${avatar.label}">
+                <span class="avatar-label">${avatar.label}</span>
+            `;
+
+            avatarItem.addEventListener('click', () => {
+                document.querySelectorAll('.avatar-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+
+                avatarItem.classList.add('selected');
+                this.selectedAvatar = avatar.name;
+
+                this.updatePlayerCustomization();
+            });
+
+            avatarGrid.appendChild(avatarItem);
+        });
+
+        const colorPicker = document.getElementById('player-color');
+        if (!colorPicker) return;
+
+        colorPicker.value = this.playerColor;
+        colorPicker.addEventListener('change', (e) => {
+            this.playerColor = e.target.value;
+            this.updatePlayerCustomization();
+        });
+    }
+
+    updatePlayerCustomization() {
+        if (!this.gameId || !this.playerId) return;
+
+        const playerData = {
+            avatar: this.selectedAvatar,
+            color: this.playerColor
+        };
+
+        set(ref(db, `games/${this.gameId}/players/${this.playerId}/customization`), playerData);
     }
 }
 
