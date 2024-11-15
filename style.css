@@ -117,11 +117,17 @@ h1 {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    --player-color: var(--primary);
+    color: var(--text);
+    transition: all 0.2s;
 }
 
 .player.active {
     background: linear-gradient(135deg, var(--player-color), var(--secondary));
+    color: white !important;
+}
+
+.player.active * {
+    color: white !important;
 }
 
 .player-avatar {
@@ -579,4 +585,129 @@ body {
 .sidebar.active ~ .aam-made-by-container {
     opacity: 0;
     visibility: hidden;
+}
+
+/* Update light theme colors */
+:root[data-theme="light"] {
+    --primary: #4f46e5;
+    --secondary: #7c3aed;
+    --success: #22c55e;
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --text: #1e293b;
+    --border: #e2e8f0;
+}
+
+/* Update made-by tag styles for light mode */
+:root[data-theme="light"] .aam-made-by-tag {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+        0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+:root[data-theme="light"] .aam-made-by-tag:hover {
+    background-color: #ffffff;
+    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05),
+        0 4px 6px -2px rgba(0, 0, 0, 0.02);
+}
+
+:root[data-theme="light"] .aam-made-by-icon {
+    stroke: #4b5563;
+}
+
+:root[data-theme="light"] .aam-made-by-text {
+    color: #4b5563;
+}
+
+:root[data-theme="light"] .aam-made-by-tag:hover .aam-made-by-icon {
+    stroke: #1f2937;
+}
+
+:root[data-theme="light"] .aam-made-by-tag:hover .aam-made-by-text {
+    color: #1f2937;
+}
+
+/* Update overlay styles for light mode */
+:root[data-theme="light"] .popup-overlay,
+:root[data-theme="light"] .sidebar-overlay {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+/* Remove the dark background override for body */
+body {
+    background: var(--background);
+    margin: 0;
+    min-height: 100vh;
+}
+
+/* Update player active state for both dark and light modes */
+.player.active {
+    background: linear-gradient(135deg, var(--player-color), var(--secondary));
+    color: white;
+}
+
+/* Update avatar label for light mode */
+:root[data-theme="light"] .avatar-label {
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+}
+
+/* Update box shadows for light mode */
+:root[data-theme="light"] .container,
+:root[data-theme="light"] .sidebar {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Update popup overlay for light mode */
+:root[data-theme="light"] .popup-overlay {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+/* Update active player gradient text color */
+.player.active span {
+    color: white;
+}
+
+/* Update player styles for both themes */
+.player {
+    flex: 1;
+    padding: 0.75rem;
+    text-align: center;
+    background: var(--background);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text);
+    transition: all 0.2s;
+}
+
+/* Ensure active player gradient works in both themes */
+.player.active {
+    background: linear-gradient(135deg, var(--player-color), var(--secondary));
+    color: white !important;
+}
+
+/* Ensure all spans inside active player are white */
+.player.active * {
+    color: white !important;
+}
+
+/* Update box shadows for better visibility in light mode */
+:root[data-theme="light"] .player {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme="light"] .player.active {
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+/* Update score display for light mode */
+:root[data-theme="light"] .score-item {
+    background: var(--background);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
