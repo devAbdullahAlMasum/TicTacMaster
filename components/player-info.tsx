@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { Trophy } from "lucide-react"
+import { Trophy, Users } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
@@ -13,15 +13,18 @@ interface PlayerInfoProps {
   isCurrentTurn: boolean
   isWinner: boolean
   isYou: boolean
+  team?: number
 }
 
-export function PlayerInfo({ name, avatarId, symbol, isCurrentTurn, isWinner, isYou }: PlayerInfoProps) {
+export function PlayerInfo({ name, avatarId, symbol, isCurrentTurn, isWinner, isYou, team }: PlayerInfoProps) {
   return (
     <Card
       className={cn(
-        "p-4 transition-all border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950",
-        isCurrentTurn && "ring-2 ring-primary/30",
-        isWinner && "ring-2 ring-green-500/30 bg-green-500/10",
+        "p-4 transition-all border border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-indigo-950 dark:to-blue-900",
+        isCurrentTurn &&
+          "ring-2 ring-indigo-500/30 bg-gradient-to-br from-indigo-100 to-blue-200 dark:from-indigo-900 dark:to-blue-800",
+        isWinner &&
+          "ring-2 ring-green-500/30 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900 dark:to-green-800",
       )}
     >
       <div className="flex items-center space-x-3">
@@ -42,21 +45,31 @@ export function PlayerInfo({ name, avatarId, symbol, isCurrentTurn, isWinner, is
             </p>
             {isWinner && <Trophy className="h-4 w-4 text-yellow-500 ml-2" />}
           </div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Playing as{" "}
-            <span
-              className={cn(
-                "font-bold",
-                symbol === "X"
-                  ? "text-blue-500 dark:text-blue-400"
-                  : symbol === "O"
-                    ? "text-rose-500 dark:text-rose-400"
-                    : "text-amber-500 dark:text-amber-400",
-              )}
-            >
-              {symbol}
-            </span>
-          </p>
+          <div className="flex items-center">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Playing as{" "}
+              <span
+                className={cn(
+                  "font-bold",
+                  symbol === "X"
+                    ? "text-blue-500 dark:text-blue-400"
+                    : symbol === "O"
+                      ? "text-rose-500 dark:text-rose-400"
+                      : symbol === "Δ"
+                        ? "text-amber-500 dark:text-amber-400"
+                        : "text-green-500 dark:text-green-400",
+                )}
+              >
+                {symbol}
+              </span>
+            </p>
+            {team && (
+              <Badge variant="outline" className="ml-2 text-xs flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                Team {team}
+              </Badge>
+            )}
+          </div>
         </div>
 
         {isCurrentTurn && (

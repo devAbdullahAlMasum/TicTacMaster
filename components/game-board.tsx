@@ -25,11 +25,12 @@ export function GameBoard({ board, onCellClick, winnerLine = [], disabled = fals
             key={`${rowIndex}-${colIndex}`}
             className={cn(
               "h-20 w-full flex items-center justify-center text-3xl font-bold rounded-lg transition-all",
-              "border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950",
-              isCellInWinnerLine(rowIndex, colIndex) && "bg-green-500/20 dark:bg-green-500/30 border-green-500/50",
+              "border-2 border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-indigo-950 dark:to-blue-900",
+              isCellInWinnerLine(rowIndex, colIndex) &&
+                "bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 border-green-500/50",
               !cell &&
                 !disabled &&
-                "hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 active:scale-95",
+                "hover:bg-gradient-to-br hover:from-indigo-100 hover:to-blue-200 dark:hover:from-indigo-900 dark:hover:to-blue-800 hover:border-indigo-300 dark:hover:border-indigo-700 active:scale-95",
               disabled && "cursor-not-allowed opacity-80",
               board.length > 3 && "h-16 text-2xl",
               board.length > 4 && "h-12 text-xl",

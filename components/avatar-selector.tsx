@@ -9,12 +9,12 @@ interface AvatarSelectorProps {
 }
 
 const AVATARS = [
-  { id: 1, src: "/placeholder.svg?height=40&width=40", alt: "Avatar 1" },
-  { id: 2, src: "/placeholder.svg?height=40&width=40", alt: "Avatar 2" },
-  { id: 3, src: "/placeholder.svg?height=40&width=40", alt: "Avatar 3" },
-  { id: 4, src: "/placeholder.svg?height=40&width=40", alt: "Avatar 4" },
-  { id: 5, src: "/placeholder.svg?height=40&width=40", alt: "Avatar 5" },
-  { id: 6, src: "/placeholder.svg?height=40&width=40", alt: "Avatar 6" },
+  { id: 1, src: "/avatars/avatar-1.png", alt: "Avatar 1" },
+  { id: 2, src: "/avatars/avatar-2.png", alt: "Avatar 2" },
+  { id: 3, src: "/avatars/avatar-3.png", alt: "Avatar 3" },
+  { id: 4, src: "/avatars/avatar-4.png", alt: "Avatar 4" },
+  { id: 5, src: "/avatars/avatar-5.png", alt: "Avatar 5" },
+  { id: 6, src: "/avatars/avatar-6.png", alt: "Avatar 6" },
 ]
 
 export function AvatarSelector({ selectedAvatar, onSelectAvatar }: AvatarSelectorProps) {
@@ -25,13 +25,17 @@ export function AvatarSelector({ selectedAvatar, onSelectAvatar }: AvatarSelecto
           key={avatar.id}
           className={cn(
             "flex flex-col items-center p-2 rounded-lg cursor-pointer transition-all",
-            selectedAvatar === avatar.id ? "bg-accent ring-2 ring-primary/30" : "hover:bg-accent/50",
+            selectedAvatar === avatar.id
+              ? "bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/50 dark:to-blue-900/50 ring-2 ring-indigo-500/30 dark:ring-indigo-500/50"
+              : "hover:bg-indigo-50 dark:hover:bg-indigo-900/30",
           )}
           onClick={() => onSelectAvatar(avatar.id)}
         >
-          <Avatar className="h-12 w-12">
+          <Avatar className="h-12 w-12 border-2 border-white dark:border-zinc-800 shadow-sm">
             <AvatarImage src={avatar.src || "/placeholder.svg"} alt={avatar.alt} />
-            <AvatarFallback>{avatar.id}</AvatarFallback>
+            <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white">
+              {avatar.id}
+            </AvatarFallback>
           </Avatar>
         </div>
       ))}

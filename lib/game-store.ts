@@ -6,6 +6,8 @@ type Player = {
   name: string
   avatarId: number
   symbol: string
+  team?: number // For team games (4 players)
+  score?: number // For tracking wins in events
 }
 
 type GameState = {
@@ -19,6 +21,17 @@ type GameState = {
   playerCount: string
   chatEnabled: boolean
   chatFilter: boolean
+  // Event-specific fields
+  isEvent?: boolean
+  currentRound?: number
+  totalRounds?: number
+  roundHistory?: Array<{
+    winner: string | null
+    isDraw: boolean
+    timestamp: number
+  }>
+  scores?: Record<string, number> // Symbol -> score
+  winningLength?: number // Number of symbols in a row needed to win
 }
 
 export type ChatMessage = {
@@ -35,20 +48,37 @@ const createEmptyGameState = (
   playerCount = "2",
   chatEnabled = true,
   chatFilter = true,
-): GameState => ({
-  board: Array(Number.parseInt(boardSize))
-    .fill("")
-    .map(() => Array(Number.parseInt(boardSize)).fill("")),
-  currentTurn: "X",
-  players: [],
-  winner: null,
-  isDraw: false,
-  lastUpdated: Date.now(),
-  boardSize,
-  playerCount,
-  chatEnabled,
-  chatFilter,
-})
+  isEvent = false,
+  totalRounds = 1,
+): GameState => {
+  // Convert boardSize to number to create proper grid
+  const size = Number.parseInt(boardSize)
+
+  // Determine winning length based on board size
+  // For 3x3, need 3 in a row; for 4x4 and 5x5, still need 3 in a row
+  const winningLength = 3
+
+  return {
+    board: Array(size)
+      .fill("")
+      .map(() => Array(size).fill("")),
+    currentTurn: "X",
+    players: [],
+    winner: null,
+    isDraw: false,
+    lastUpdated: Date.now(),
+    boardSize,
+    playerCount,
+    chatEnabled,
+    chatFilter,
+    isEvent: isEvent,
+    currentRound: isEvent ? 1 : undefined,
+    totalRounds: isEvent ? totalRounds : undefined,
+    roundHistory: isEvent ? [] : undefined,
+    scores: isEvent ? {} : undefined,
+    winningLength: winningLength,
+  }
+}
 
 // Get game state from localStorage
 export const getGameState = (roomCode: string): GameState => {
@@ -85,47 +115,127 @@ export const saveGameState = (roomCode: string, state: GameState) => {
   }
 }
 
-// Reset game state
+// Reset game state for a new round
 export const resetGameState = (
   roomCode: string,
   boardSize?: string,
   playerCount?: string,
   chatEnabled?: boolean,
   chatFilter?: boolean,
+  isEvent?: boolean,
+  totalRounds?: number,
+  advanceRound = false,
 ) => {
   const currentState = getGameState(roomCode)
+
+  // For events, track round history
+  if (currentState.isEvent && currentState.winner) {
+    if (!currentState.roundHistory) {
+      currentState.roundHistory = []
+    }
+
+    // Record the round result
+    currentState.roundHistory.push({
+      winner: currentState.winner.symbol,
+      isDraw: false,
+      timestamp: Date.now(),
+    })
+
+    // Update scores
+    if (!currentState.scores) {
+      currentState.scores = {}
+    }
+
+    const winnerSymbol = currentState.winner.symbol
+    currentState.scores[winnerSymbol] = (currentState.scores[winnerSymbol] || 0) + 1
+  } else if (currentState.isEvent && currentState.isDraw) {
+    if (!currentState.roundHistory) {
+      currentState.roundHistory = []
+    }
+
+    // Record draw
+    currentState.roundHistory.push({
+      winner: null,
+      isDraw: true,
+      timestamp: Date.now(),
+    })
+  }
+
+  // Create new state
   const newState = {
     ...createEmptyGameState(
       boardSize || currentState.boardSize,
       playerCount || currentState.playerCount,
       chatEnabled !== undefined ? chatEnabled : currentState.chatEnabled,
       chatFilter !== undefined ? chatFilter : currentState.chatFilter,
+      isEvent !== undefined ? isEvent : currentState.isEvent,
+      totalRounds || currentState.totalRounds,
     ),
     players: currentState.players, // Keep the players
+    roundHistory: currentState.roundHistory, // Keep round history
+    scores: currentState.scores, // Keep scores
   }
+
+  // For events, handle round advancement
+  if (newState.isEvent && advanceRound && currentState.currentRound) {
+    newState.currentRound = currentState.currentRound + 1
+  } else if (newState.isEvent) {
+    newState.currentRound = currentState.currentRound || 1
+  }
+
   saveGameState(roomCode, newState)
   return newState
 }
 
-// Add a player to the game
+// Fix the player symbol assignment and turn tracking
 export const addPlayer = (roomCode: string, player: Player): GameState => {
   const state = getGameState(roomCode)
 
   // Check if player already exists
-  if (!state.players.some((p) => p.id === player.id)) {
-    // Assign appropriate symbol based on player count and position
-    if (state.playerCount === "3" && state.players.length === 2) {
-      player.symbol = "Δ" // Triangle for third player
-    }
-
-    state.players.push(player)
-    saveGameState(roomCode, state)
+  const existingPlayer = state.players.find((p) => p.id === player.id)
+  if (existingPlayer) {
+    return state // Player already exists, no need to add again
   }
 
+  // Assign appropriate symbol based on player count and position
+  const playerPosition = state.players.length
+  const maxPlayers = Number.parseInt(state.playerCount)
+
+  if (playerPosition === 0) {
+    player.symbol = "X"
+  } else if (playerPosition === 1) {
+    player.symbol = "O"
+  } else if (playerPosition === 2 && maxPlayers >= 3) {
+    player.symbol = "Δ" // Triangle for third player
+  } else if (playerPosition === 3 && maxPlayers >= 4) {
+    player.symbol = "□" // Square for fourth player
+  }
+
+  // For 4-player mode (teams)
+  if (maxPlayers === 4) {
+    if (playerPosition === 0 || playerPosition === 2) {
+      player.team = 1 // Team 1: X and Δ
+    } else {
+      player.team = 2 // Team 2: O and □
+    }
+  }
+
+  // Initialize player score for events
+  if (state.isEvent) {
+    player.score = 0
+    if (!state.scores) {
+      state.scores = {}
+    }
+    state.scores[player.symbol] = 0
+  }
+
+  // Add player to the game
+  state.players.push(player)
+  saveGameState(roomCode, state)
   return state
 }
 
-// Make a move in the game
+// Fix the turn tracking logic
 export const makeMove = (roomCode: string, playerId: string, row: number, col: number): GameState => {
   const state = getGameState(roomCode)
 
@@ -144,19 +254,32 @@ export const makeMove = (roomCode: string, playerId: string, row: number, col: n
   const newBoard = state.board.map((r, i) => r.map((c, j) => (i === row && j === col ? state.currentTurn : c)))
 
   // Check for win
-  const winResult = checkWin(newBoard, state.currentTurn, Number.parseInt(state.boardSize))
+  const boardSize = Number.parseInt(state.boardSize)
+  const winningLength = state.winningLength || 3
+  const winResult = checkWin(newBoard, state.currentTurn, boardSize, winningLength)
   const isDraw = !winResult && newBoard.every((row) => row.every((cell) => cell !== ""))
 
   // Update state
   state.board = newBoard
 
-  // Determine next turn based on player count
-  if (state.playerCount === "2") {
+  // Determine next turn based on player count and available players
+  const playerCount = Number.parseInt(state.playerCount)
+  const availableSymbols = state.players.map((p) => p.symbol).sort()
+
+  if (playerCount === 2) {
+    // For 2 players, just toggle between X and O
     state.currentTurn = state.currentTurn === "X" ? "O" : "X"
-  } else if (state.playerCount === "3") {
-    // For 3 players, cycle through X, O, and Δ
+  } else if (playerCount === 3) {
+    // For 3 players, cycle through available symbols
+    const currentIndex = availableSymbols.indexOf(state.currentTurn)
+    const nextIndex = (currentIndex + 1) % availableSymbols.length
+    state.currentTurn = availableSymbols[nextIndex]
+  } else if (playerCount === 4) {
+    // For 4 players (teams), alternate between teams
+    // Team 1: X and Δ, Team 2: O and □
     if (state.currentTurn === "X") state.currentTurn = "O"
     else if (state.currentTurn === "O") state.currentTurn = "Δ"
+    else if (state.currentTurn === "Δ") state.currentTurn = "□"
     else state.currentTurn = "X"
   }
 
@@ -164,6 +287,11 @@ export const makeMove = (roomCode: string, playerId: string, row: number, col: n
     state.winner = {
       symbol: currentPlayer.symbol,
       line: winResult,
+    }
+
+    // Update scores for events
+    if (state.isEvent && state.scores) {
+      state.scores[currentPlayer.symbol] = (state.scores[currentPlayer.symbol] || 0) + 1
     }
   }
 
@@ -174,53 +302,166 @@ export const makeMove = (roomCode: string, playerId: string, row: number, col: n
   return state
 }
 
-// Check for win
-const checkWin = (board: string[][], symbol: string, boardSize: number): number[][] | null => {
+// Check for win with variable winning length
+const checkWin = (board: string[][], symbol: string, boardSize: number, winningLength: number): number[][] | null => {
   // Check rows
   for (let i = 0; i < boardSize; i++) {
-    if (board[i].every((cell) => cell === symbol)) {
-      return Array(boardSize)
-        .fill(0)
-        .map((_, j) => [i, j])
+    for (let j = 0; j <= boardSize - winningLength; j++) {
+      let win = true
+      for (let k = 0; k < winningLength; k++) {
+        if (board[i][j + k] !== symbol) {
+          win = false
+          break
+        }
+      }
+      if (win) {
+        return Array(winningLength)
+          .fill(0)
+          .map((_, k) => [i, j + k])
+      }
     }
   }
 
   // Check columns
-  for (let i = 0; i < boardSize; i++) {
-    if (
-      Array(boardSize)
-        .fill(0)
-        .every((_, j) => board[j][i] === symbol)
-    ) {
-      return Array(boardSize)
-        .fill(0)
-        .map((_, j) => [j, i])
+  for (let i = 0; i <= boardSize - winningLength; i++) {
+    for (let j = 0; j < boardSize; j++) {
+      let win = true
+      for (let k = 0; k < winningLength; k++) {
+        if (board[i + k][j] !== symbol) {
+          win = false
+          break
+        }
+      }
+      if (win) {
+        return Array(winningLength)
+          .fill(0)
+          .map((_, k) => [i + k, j])
+      }
     }
   }
 
-  // Check main diagonal
-  if (
-    Array(boardSize)
-      .fill(0)
-      .every((_, i) => board[i][i] === symbol)
-  ) {
-    return Array(boardSize)
-      .fill(0)
-      .map((_, i) => [i, i])
+  // Check diagonals (top-left to bottom-right)
+  for (let i = 0; i <= boardSize - winningLength; i++) {
+    for (let j = 0; j <= boardSize - winningLength; j++) {
+      let win = true
+      for (let k = 0; k < winningLength; k++) {
+        if (board[i + k][j + k] !== symbol) {
+          win = false
+          break
+        }
+      }
+      if (win) {
+        return Array(winningLength)
+          .fill(0)
+          .map((_, k) => [i + k, j + k])
+      }
+    }
   }
 
-  // Check other diagonal
-  if (
-    Array(boardSize)
-      .fill(0)
-      .every((_, i) => board[i][boardSize - 1 - i] === symbol)
-  ) {
-    return Array(boardSize)
-      .fill(0)
-      .map((_, i) => [i, boardSize - 1 - i])
+  // Check diagonals (top-right to bottom-left)
+  for (let i = 0; i <= boardSize - winningLength; i++) {
+    for (let j = winningLength - 1; j < boardSize; j++) {
+      let win = true
+      for (let k = 0; k < winningLength; k++) {
+        if (board[i + k][j - k] !== symbol) {
+          win = false
+          break
+        }
+      }
+      if (win) {
+        return Array(winningLength)
+          .fill(0)
+          .map((_, k) => [i + k, j - k])
+      }
+    }
   }
 
   return null
+}
+
+// Advance to next round in an event
+export const advanceToNextRound = (roomCode: string): GameState => {
+  const state = getGameState(roomCode)
+
+  if (!state.isEvent) {
+    return state
+  }
+
+  // Check if we've reached the maximum number of rounds
+  if (state.currentRound && state.totalRounds && state.currentRound >= state.totalRounds) {
+    // Event is complete
+    return state
+  }
+
+  // Reset the board but keep scores and advance round counter
+  return resetGameState(roomCode, undefined, undefined, undefined, undefined, true, undefined, true)
+}
+
+// Check if a team/player has won the event
+export const checkEventWinner = (
+  roomCode: string,
+): { winner: string | null; winningScore: number; isDraw: boolean } => {
+  const state = getGameState(roomCode)
+
+  if (!state.isEvent || !state.scores) {
+    return { winner: null, winningScore: 0, isDraw: false }
+  }
+
+  // Calculate score needed to win
+  const scoreToWin = state.totalRounds ? Math.ceil(Number(state.totalRounds) / 2) : 1
+
+  // Check if any player has reached the winning score
+  let highestScore = 0
+  let winners: string[] = []
+
+  Object.entries(state.scores).forEach(([symbol, score]) => {
+    if (score >= scoreToWin) {
+      if (score > highestScore) {
+        highestScore = score
+        winners = [symbol]
+      } else if (score === highestScore) {
+        winners.push(symbol)
+      }
+    }
+  })
+
+  // If we have a single winner
+  if (winners.length === 1) {
+    return { winner: winners[0], winningScore: highestScore, isDraw: false }
+  }
+
+  // If we have multiple winners (draw)
+  if (winners.length > 1) {
+    return { winner: null, winningScore: highestScore, isDraw: true }
+  }
+
+  // Check if all rounds have been played
+  if (state.currentRound && state.totalRounds && state.currentRound >= state.totalRounds) {
+    // Find the highest score
+    let highestScore = 0
+    let winners: string[] = []
+
+    Object.entries(state.scores).forEach(([symbol, score]) => {
+      if (score > highestScore) {
+        highestScore = score
+        winners = [symbol]
+      } else if (score === highestScore) {
+        winners.push(symbol)
+      }
+    })
+
+    // If we have a single winner
+    if (winners.length === 1) {
+      return { winner: winners[0], winningScore: highestScore, isDraw: false }
+    }
+
+    // If we have multiple winners (draw)
+    if (winners.length > 1) {
+      return { winner: null, winningScore: highestScore, isDraw: true }
+    }
+  }
+
+  return { winner: null, winningScore: 0, isDraw: false }
 }
 
 // Get chat messages
@@ -356,5 +597,39 @@ export const addChatMessage = (roomCode: string, sender: string, text: string): 
   } catch (error) {
     console.error("Error adding chat message:", error)
     return getChatMessages(roomCode)
+  }
+}
+
+// Save settings to localStorage
+export const saveSettings = (settings: any) => {
+  try {
+    localStorage.setItem("game-settings", JSON.stringify(settings))
+    return true
+  } catch (error) {
+    console.error("Error saving settings:", error)
+    return false
+  }
+}
+
+// Get settings from localStorage
+export const getSettings = () => {
+  try {
+    const settings = localStorage.getItem("game-settings")
+    if (settings) {
+      return JSON.parse(settings)
+    }
+  } catch (error) {
+    console.error("Error getting settings:", error)
+  }
+
+  // Default settings
+  return {
+    theme: "system",
+    gameNotifications: true,
+    chatNotifications: true,
+    soundEffects: true,
+    defaultBoardSize: "3x3",
+    defaultPlayerName: "",
+    defaultAvatarId: "1",
   }
 }

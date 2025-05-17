@@ -81,7 +81,7 @@ export function EnhancedChat({
   }
 
   return (
-    <Card className="h-full flex flex-col border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
+    <Card className="h-full flex flex-col border border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-indigo-950 dark:to-blue-900">
       <CardHeader className="p-4 border-b border-zinc-200 dark:border-zinc-800 space-y-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center">

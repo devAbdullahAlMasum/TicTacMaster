@@ -5,8 +5,9 @@ interface GameStatusProps {
   winner: { symbol: string; line: number[][] } | null
   isDraw: boolean
   isPlayerTurn: boolean
-  playerName: string
-  opponentName?: string
+  playerSymbol: string
+  currentTurnPlayerName?: string
+  winnerName?: string
 }
 
 export function GameStatus({
@@ -14,8 +15,9 @@ export function GameStatus({
   winner,
   isDraw,
   isPlayerTurn,
-  playerName,
-  opponentName,
+  playerSymbol,
+  currentTurnPlayerName,
+  winnerName,
 }: GameStatusProps) {
   let statusMessage = ""
   let statusClass = "text-foreground"
@@ -24,14 +26,15 @@ export function GameStatus({
     statusMessage = "Waiting for an opponent to join..."
     statusClass = "text-muted-foreground"
   } else if (winner) {
-    const isPlayerWinner = isPlayerTurn ? winner.symbol !== "X" : winner.symbol === "X"
-    statusMessage = isPlayerWinner ? "You won the game! 🎉" : `${opponentName || "Opponent"} won the game!`
+    // Fixed winner display logic
+    const isPlayerWinner = winner.symbol === playerSymbol
+    statusMessage = isPlayerWinner ? "You won the game! 🎉" : `${winnerName || "Opponent"} won the game!`
     statusClass = isPlayerWinner ? "text-green-600 dark:text-green-400" : "text-rose-600 dark:text-rose-400"
   } else if (isDraw) {
     statusMessage = "Game ended in a draw!"
     statusClass = "text-amber-600 dark:text-amber-400"
   } else {
-    statusMessage = isPlayerTurn ? "Your turn" : `Waiting for ${opponentName || "opponent"} to make a move...`
+    statusMessage = isPlayerTurn ? "Your turn" : `Waiting for ${currentTurnPlayerName || "opponent"} to make a move...`
   }
 
   return (
