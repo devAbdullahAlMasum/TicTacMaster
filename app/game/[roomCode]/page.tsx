@@ -8,7 +8,7 @@ import { GameStatus } from "@/components/game-status"
 import { EventStatus } from "@/components/event-status"
 import { EnhancedChat } from "@/components/enhanced-chat"
 import { Button } from "@/components/ui/button"
-import { Copy, Home, Users, Trophy, RotateCw, AlertTriangle, Grid3X3 } from "lucide-react"
+import { Copy, Home, Users, Trophy, RotateCw, AlertTriangle, Grid3X3, Bot, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "@/components/ui/use-toast"
 import {
@@ -22,6 +22,7 @@ import {
   checkEventWinner,
   type ChatMessage,
 } from "@/lib/game-store"
+import { AIPlayer, type Difficulty } from "@/lib/ai-player"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -38,17 +39,23 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
   const roomCode = params.roomCode
   const isEvent = searchParams.get("event") === "true"
   const eventName = searchParams.get("eventName") || "Custom Game"
+  const isSinglePlayer = searchParams.get("singlePlayer") === "true"
+  const difficulty = (searchParams.get("difficulty") || "medium") as Difficulty
 
   // Parse board size from URL (format: "3x3", "4x4", "5x5")
   const boardSizeParam = searchParams.get("boardSize") || "3x3"
   const boardSize = boardSizeParam.split("x")[0] // Extract just the number
 
   const playerCount = searchParams.get("playerCount") || "2"
-  const chatEnabled = searchParams.get("chatEnabled") !== "false"
+  const chatEnabled = searchParams.get("chatEnabled") !== "false" && !isSinglePlayer
   const chatFilterEnabled = searchParams.get("chatFilter") !== "false"
 
   // Chat filter state
   const [filterEnabled, setFilterEnabled] = useState(chatFilterEnabled)
+
+  // AI state
+  const [aiPlayer, setAiPlayer] = useState<AIPlayer | null>(null)
+  const [isAiThinking, setIsAiThinking] = useState(false)
 
   // Generate a unique ID for this player that persists across refreshes
   const [playerId] = useState(() => {
@@ -87,6 +94,14 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
     }
   }, [isEvent, roomCode])
 
+  // Initialize AI player for single player mode
+  useEffect(() => {
+    if (isSinglePlayer) {
+      const ai = new AIPlayer(difficulty, "O", "X", Number.parseInt(boardSize), 3)
+      setAiPlayer(ai)
+    }
+  }, [isSinglePlayer, difficulty, boardSize])
+
   // Initialize player and game state
   useEffect(() => {
     // Initialize game state with event settings if needed
@@ -106,8 +121,28 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
     const updatedState = addPlayer(roomCode, player)
     setGameState(updatedState)
 
-    // If we're not the host and there's only one player, create a simulated opponent
-    if (!isHost && updatedState.players.length === 1) {
+    // For single player mode, add AI opponent
+    if (isSinglePlayer && updatedState.players.length === 1) {
+      setTimeout(() => {
+        const aiOpponent = {
+          id: `ai-${roomCode}`,
+          name: `AI (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`,
+          avatarId: 7, // Special AI avatar
+          symbol: "O",
+        }
+
+        const stateWithAI = addPlayer(roomCode, aiOpponent)
+        setGameState(stateWithAI)
+
+        toast({
+          title: "AI Opponent Ready!",
+          description: `You're playing against ${difficulty} difficulty AI.`,
+          duration: 3000,
+        })
+      }, 1000)
+    }
+    // For multiplayer, create a simulated opponent if needed
+    else if (!isHost && !isSinglePlayer && updatedState.players.length === 1) {
       setTimeout(() => {
         const hostPlayer = {
           id: `host-${roomCode}`,
@@ -154,9 +189,11 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
       }
 
       // Also check for new messages
-      const latestMessages = getChatMessages(roomCode)
-      if (latestMessages.length !== messages.length) {
-        setMessages(latestMessages)
+      if (chatEnabled) {
+        const latestMessages = getChatMessages(roomCode)
+        if (latestMessages.length !== messages.length) {
+          setMessages(latestMessages)
+        }
       }
 
       // Check for event winner
@@ -185,6 +222,46 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
     chatEnabled,
     chatFilterEnabled,
     eventDetails,
+    isSinglePlayer,
+    difficulty,
+  ])
+
+  // Handle AI moves
+  useEffect(() => {
+    if (
+      isSinglePlayer &&
+      aiPlayer &&
+      gameState.currentTurn === "O" &&
+      !gameState.winner &&
+      !gameState.isDraw &&
+      gameState.players.length >= 2
+    ) {
+      setIsAiThinking(true)
+
+      // Add a delay to make AI moves feel more natural
+      const aiDelay = difficulty === "easy" ? 1000 : difficulty === "medium" ? 1500 : 2000
+
+      setTimeout(() => {
+        try {
+          const aiMove = aiPlayer.getMove(gameState.board)
+          const updatedState = makeMove(roomCode, `ai-${roomCode}`, aiMove.row, aiMove.col)
+          setGameState(updatedState)
+        } catch (error) {
+          console.error("AI move error:", error)
+        } finally {
+          setIsAiThinking(false)
+        }
+      }, aiDelay)
+    }
+  }, [
+    gameState.currentTurn,
+    gameState.board,
+    gameState.winner,
+    gameState.isDraw,
+    isSinglePlayer,
+    aiPlayer,
+    roomCode,
+    difficulty,
   ])
 
   // Update waiting status when players change
@@ -199,6 +276,7 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
 
   // Handle making a move
   const handleMakeMove = (row: number, col: number) => {
+    if (isAiThinking) return // Prevent moves while AI is thinking
     const updatedState = makeMove(roomCode, playerId, row, col)
     setGameState(updatedState)
   }
@@ -230,11 +308,11 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
   // Handle sending a chat message
   const handleSendMessage = useCallback(
     (text: string) => {
-      if (!text.trim()) return
+      if (!text.trim() || !chatEnabled) return
       const updatedMessages = addChatMessage(roomCode, playerName, text)
       setMessages(updatedMessages)
     },
-    [roomCode, playerName],
+    [roomCode, playerName, chatEnabled],
   )
 
   // Handle copying room code
@@ -254,7 +332,7 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
   const opponents = gameState.players.filter((p) => p.id !== playerId)
 
   // Determine if it's the current player's turn
-  const isPlayerTurn = currentPlayer && currentPlayer.symbol === gameState.currentTurn
+  const isPlayerTurn = currentPlayer && currentPlayer.symbol === gameState.currentTurn && !isAiThinking
 
   // Find whose turn it is
   const currentTurnPlayer = gameState.players.find((p) => p.symbol === gameState.currentTurn)
@@ -274,32 +352,48 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
 
   // Update game state when filter is toggled
   useEffect(() => {
-    if (isHost) {
+    if (isHost && chatEnabled) {
       const currentState = getGameState(roomCode)
       if (currentState.chatFilter !== filterEnabled) {
         currentState.chatFilter = filterEnabled
         saveGameState(roomCode, currentState)
       }
     }
-  }, [filterEnabled, isHost, roomCode])
+  }, [filterEnabled, isHost, roomCode, chatEnabled])
 
   // Calculate score to win for events
   const scoreToWin = gameState.totalRounds ? Math.ceil(Number(gameState.totalRounds) / 2) : 1
 
   // Determine the theme color based on the game type
   const getThemeColor = () => {
-    if (isEvent) {
+    if (isSinglePlayer) {
       return {
         light: {
           from: "from-purple-50",
-          to: "to-indigo-50",
+          to: "to-pink-50",
           border: "border-purple-100",
           darkFrom: "dark:from-purple-950/50",
-          darkTo: "dark:to-indigo-950/50",
+          darkTo: "dark:to-pink-950/50",
           darkBorder: "dark:border-purple-900",
-          gradientText: "from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400",
-          iconBg: "from-purple-500 to-indigo-600",
+          gradientText: "from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400",
+          iconBg: "from-purple-500 to-pink-600",
           text: "text-purple-600 dark:text-purple-400",
+        },
+      }
+    }
+
+    if (isEvent) {
+      return {
+        light: {
+          from: "from-amber-50",
+          to: "to-orange-50",
+          border: "border-amber-100",
+          darkFrom: "dark:from-amber-950/50",
+          darkTo: "dark:to-orange-950/50",
+          darkBorder: "dark:border-amber-900",
+          gradientText: "from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400",
+          iconBg: "from-amber-500 to-orange-600",
+          text: "text-amber-600 dark:text-amber-400",
         },
       }
     }
@@ -341,29 +435,42 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
               </Link>
 
               <div className="flex items-center ml-4">
-                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-gradient-to-br ${theme.iconBg} text-white mr-3 shadow-lg">
-                  <Grid3X3 className="h-5 w-5" />
+                <div
+                  className={`flex items-center justify-center h-10 w-10 rounded-xl bg-gradient-to-br ${theme.iconBg} text-white mr-3 shadow-lg`}
+                >
+                  {isSinglePlayer ? <Bot className="h-5 w-5" /> : <Grid3X3 className="h-5 w-5" />}
                 </div>
                 <div>
                   <h1
                     className={`text-xl font-bold bg-gradient-to-r ${theme.gradientText} text-transparent bg-clip-text`}
                   >
-                    {isEvent ? "Tournament Game" : "Game Room"}
+                    {isSinglePlayer ? "Single Player" : isEvent ? "Tournament Game" : "Game Room"}
                   </h1>
                   <div className="flex items-center">
                     <Badge variant="outline" className="mr-2 border-zinc-200 dark:border-zinc-800">
                       Room: {roomCode}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleCopyRoomCode}
-                        className="ml-1 h-5 w-5 p-0 hover:bg-zinc-200 dark:hover:bg-zinc-800 active:scale-95 transition-all"
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
+                      {!isSinglePlayer && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleCopyRoomCode}
+                          className="ml-1 h-5 w-5 p-0 hover:bg-zinc-200 dark:hover:bg-zinc-800 active:scale-95 transition-all"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      )}
                     </Badge>
 
-                    {isEvent && (
+                    {isSinglePlayer && (
+                      <Badge
+                        variant="secondary"
+                        className="ml-2 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                      >
+                        vs AI ({difficulty})
+                      </Badge>
+                    )}
+
+                    {isEvent && eventName && (
                       <Badge variant="secondary" className="ml-2">
                         {eventName}
                       </Badge>
@@ -428,6 +535,20 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
                     </Alert>
                   )}
 
+                  {/* AI thinking indicator */}
+                  {isSinglePlayer && isAiThinking && (
+                    <Alert className="bg-purple-100 dark:bg-purple-900 border-purple-200 dark:border-purple-800">
+                      <Bot className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <AlertTitle className="text-purple-800 dark:text-purple-200 flex items-center">
+                        AI is thinking...
+                        <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                      </AlertTitle>
+                      <AlertDescription className="text-purple-700 dark:text-purple-300">
+                        The AI is calculating the best move for {difficulty} difficulty.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   {/* Event status for event games - make visible to all players */}
                   {gameState.isEvent && gameState.currentRound && gameState.totalRounds && (
                     <EventStatus
@@ -461,7 +582,7 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
                           board={gameState.board}
                           onCellClick={handleMakeMove}
                           winnerLine={gameState.winner?.line}
-                          disabled={!canPlay || !isPlayerTurn}
+                          disabled={!canPlay || !isPlayerTurn || isAiThinking}
                         />
                       </div>
 
@@ -504,7 +625,7 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
                         name={currentPlayer.name}
                         avatarId={currentPlayer.avatarId}
                         symbol={currentPlayer.symbol}
-                        isCurrentTurn={gameState.currentTurn === currentPlayer.symbol}
+                        isCurrentTurn={gameState.currentTurn === currentPlayer.symbol && !isAiThinking}
                         isWinner={gameState.winner?.symbol === currentPlayer.symbol}
                         isYou={true}
                         team={currentPlayer.team}
@@ -519,7 +640,10 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
                             name={opponent.name}
                             avatarId={opponent.avatarId}
                             symbol={opponent.symbol}
-                            isCurrentTurn={gameState.currentTurn === opponent.symbol}
+                            isCurrentTurn={
+                              gameState.currentTurn === opponent.symbol ||
+                              (opponent.id.startsWith("ai-") && isAiThinking)
+                            }
                             isWinner={gameState.winner?.symbol === opponent.symbol}
                             isYou={false}
                             team={opponent.team}
@@ -528,7 +652,9 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
                       </div>
                     ) : (
                       <Card className="flex items-center justify-center p-4 border border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-indigo-950 dark:to-blue-900">
-                        <p className="text-indigo-600 dark:text-indigo-400">Waiting for opponents...</p>
+                        <p className="text-indigo-600 dark:text-indigo-400">
+                          {isSinglePlayer ? "Setting up AI opponent..." : "Waiting for opponents..."}
+                        </p>
                       </Card>
                     )}
                   </div>
@@ -563,13 +689,15 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
                             </p>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300">Player Count</p>
-                            <p className="text-sm text-indigo-600/80 dark:text-indigo-400/80">{playerCount} Players</p>
+                            <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300">Game Mode</p>
+                            <p className="text-sm text-indigo-600/80 dark:text-indigo-400/80">
+                              {isSinglePlayer ? `Single Player (${difficulty})` : `${playerCount} Players`}
+                            </p>
                           </div>
                           <div>
                             <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300">Your Role</p>
                             <p className="text-sm text-indigo-600/80 dark:text-indigo-400/80">
-                              {isHost ? "Host" : "Guest"}
+                              {isSinglePlayer ? "Player" : isHost ? "Host" : "Guest"}
                             </p>
                           </div>
                           <div>
@@ -656,14 +784,18 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
             ) : (
               <Card className="h-full border border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-indigo-950 dark:to-blue-900">
                 <CardHeader>
-                  <CardTitle className="text-indigo-700 dark:text-indigo-300">Chat Disabled</CardTitle>
+                  <CardTitle className="text-indigo-700 dark:text-indigo-300">
+                    {isSinglePlayer ? "Single Player Mode" : "Chat Disabled"}
+                  </CardTitle>
                   <CardDescription className="text-indigo-600/80 dark:text-indigo-400/80">
-                    The host has disabled chat for this game
+                    {isSinglePlayer ? "Focus on your game against the AI" : "The host has disabled chat for this game"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-indigo-600/80 dark:text-indigo-400/80">
-                    Chat is currently unavailable for this game session.
+                    {isSinglePlayer
+                      ? "Chat is not available in single player mode. Focus on beating the AI!"
+                      : "Chat is currently unavailable for this game session."}
                   </p>
                 </CardContent>
               </Card>

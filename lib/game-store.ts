@@ -80,12 +80,27 @@ const createEmptyGameState = (
   }
 }
 
+// Validate game state
+const validateGameState = (state: GameState): boolean => {
+  if (!state) return false
+  if (!Array.isArray(state.board)) return false
+  if (typeof state.currentTurn !== "string") return false
+  if (!Array.isArray(state.players)) return false
+  return true // Add more checks as needed
+}
+
 // Get game state from localStorage
 export const getGameState = (roomCode: string): GameState => {
   try {
     const savedState = localStorage.getItem(`game-${roomCode}`)
     if (savedState) {
-      return JSON.parse(savedState)
+      const parsedState = JSON.parse(savedState)
+      if (validateGameState(parsedState)) {
+        return parsedState
+      } else {
+        console.error("Invalid game state in localStorage")
+        return createEmptyGameState()
+      }
     }
   } catch (error) {
     console.error("Error getting game state:", error)
@@ -98,6 +113,11 @@ export const getGameState = (roomCode: string): GameState => {
 // Save game state to localStorage and dispatch event for other tabs
 export const saveGameState = (roomCode: string, state: GameState) => {
   try {
+    if (!validateGameState(state)) {
+      console.error("Attempted to save invalid game state")
+      return
+    }
+
     // Add timestamp to track updates
     state.lastUpdated = Date.now()
 
@@ -126,180 +146,195 @@ export const resetGameState = (
   totalRounds?: number,
   advanceRound = false,
 ) => {
-  const currentState = getGameState(roomCode)
+  try {
+    const currentState = getGameState(roomCode)
 
-  // For events, track round history
-  if (currentState.isEvent && currentState.winner) {
-    if (!currentState.roundHistory) {
-      currentState.roundHistory = []
+    // For events, track round history
+    if (currentState.isEvent && currentState.winner) {
+      if (!currentState.roundHistory) {
+        currentState.roundHistory = []
+      }
+
+      // Record the round result
+      currentState.roundHistory.push({
+        winner: currentState.winner.symbol,
+        isDraw: false,
+        timestamp: Date.now(),
+      })
+
+      // Update scores
+      if (!currentState.scores) {
+        currentState.scores = {}
+      }
+
+      const winnerSymbol = currentState.winner.symbol
+      currentState.scores[winnerSymbol] = (currentState.scores[winnerSymbol] || 0) + 1
+    } else if (currentState.isEvent && currentState.isDraw) {
+      if (!currentState.roundHistory) {
+        currentState.roundHistory = []
+      }
+
+      // Record draw
+      currentState.roundHistory.push({
+        winner: null,
+        isDraw: true,
+        timestamp: Date.now(),
+      })
     }
 
-    // Record the round result
-    currentState.roundHistory.push({
-      winner: currentState.winner.symbol,
-      isDraw: false,
-      timestamp: Date.now(),
-    })
-
-    // Update scores
-    if (!currentState.scores) {
-      currentState.scores = {}
+    // Create new state
+    const newState = {
+      ...createEmptyGameState(
+        boardSize || currentState.boardSize,
+        playerCount || currentState.playerCount,
+        chatEnabled !== undefined ? chatEnabled : currentState.chatEnabled,
+        chatFilter !== undefined ? chatFilter : currentState.chatFilter,
+        isEvent !== undefined ? isEvent : currentState.isEvent,
+        totalRounds || currentState.totalRounds,
+      ),
+      players: currentState.players, // Keep the players
+      roundHistory: currentState.roundHistory, // Keep round history
+      scores: currentState.scores, // Keep scores
     }
 
-    const winnerSymbol = currentState.winner.symbol
-    currentState.scores[winnerSymbol] = (currentState.scores[winnerSymbol] || 0) + 1
-  } else if (currentState.isEvent && currentState.isDraw) {
-    if (!currentState.roundHistory) {
-      currentState.roundHistory = []
+    // For events, handle round advancement
+    if (newState.isEvent && advanceRound && currentState.currentRound) {
+      newState.currentRound = currentState.currentRound + 1
+    } else if (newState.isEvent) {
+      newState.currentRound = currentState.currentRound || 1
     }
 
-    // Record draw
-    currentState.roundHistory.push({
-      winner: null,
-      isDraw: true,
-      timestamp: Date.now(),
-    })
+    saveGameState(roomCode, newState)
+    return newState
+  } catch (error) {
+    console.error("Error resetting game state:", error)
+    return getGameState(roomCode) // Return current state in case of error
   }
-
-  // Create new state
-  const newState = {
-    ...createEmptyGameState(
-      boardSize || currentState.boardSize,
-      playerCount || currentState.playerCount,
-      chatEnabled !== undefined ? chatEnabled : currentState.chatEnabled,
-      chatFilter !== undefined ? chatFilter : currentState.chatFilter,
-      isEvent !== undefined ? isEvent : currentState.isEvent,
-      totalRounds || currentState.totalRounds,
-    ),
-    players: currentState.players, // Keep the players
-    roundHistory: currentState.roundHistory, // Keep round history
-    scores: currentState.scores, // Keep scores
-  }
-
-  // For events, handle round advancement
-  if (newState.isEvent && advanceRound && currentState.currentRound) {
-    newState.currentRound = currentState.currentRound + 1
-  } else if (newState.isEvent) {
-    newState.currentRound = currentState.currentRound || 1
-  }
-
-  saveGameState(roomCode, newState)
-  return newState
 }
 
 // Fix the player symbol assignment and turn tracking
 export const addPlayer = (roomCode: string, player: Player): GameState => {
-  const state = getGameState(roomCode)
+  try {
+    const state = getGameState(roomCode)
 
-  // Check if player already exists
-  const existingPlayer = state.players.find((p) => p.id === player.id)
-  if (existingPlayer) {
-    return state // Player already exists, no need to add again
-  }
-
-  // Assign appropriate symbol based on player count and position
-  const playerPosition = state.players.length
-  const maxPlayers = Number.parseInt(state.playerCount)
-
-  if (playerPosition === 0) {
-    player.symbol = "X"
-  } else if (playerPosition === 1) {
-    player.symbol = "O"
-  } else if (playerPosition === 2 && maxPlayers >= 3) {
-    player.symbol = "Δ" // Triangle for third player
-  } else if (playerPosition === 3 && maxPlayers >= 4) {
-    player.symbol = "□" // Square for fourth player
-  }
-
-  // For 4-player mode (teams)
-  if (maxPlayers === 4) {
-    if (playerPosition === 0 || playerPosition === 2) {
-      player.team = 1 // Team 1: X and Δ
-    } else {
-      player.team = 2 // Team 2: O and □
+    // Check if player already exists
+    const existingPlayer = state.players.find((p) => p.id === player.id)
+    if (existingPlayer) {
+      return state // Player already exists, no need to add again
     }
-  }
 
-  // Initialize player score for events
-  if (state.isEvent) {
-    player.score = 0
-    if (!state.scores) {
-      state.scores = {}
+    // Assign appropriate symbol based on player count and position
+    const playerPosition = state.players.length
+    const maxPlayers = Number.parseInt(state.playerCount)
+
+    if (playerPosition === 0) {
+      player.symbol = "X"
+    } else if (playerPosition === 1) {
+      player.symbol = "O"
+    } else if (playerPosition === 2 && maxPlayers >= 3) {
+      player.symbol = "Δ" // Triangle for third player
+    } else if (playerPosition === 3 && maxPlayers >= 4) {
+      player.symbol = "□" // Square for fourth player
     }
-    state.scores[player.symbol] = 0
-  }
 
-  // Add player to the game
-  state.players.push(player)
-  saveGameState(roomCode, state)
-  return state
+    // For 4-player mode (teams)
+    if (maxPlayers === 4) {
+      if (playerPosition === 0 || playerPosition === 2) {
+        player.team = 1 // Team 1: X and Δ
+      } else {
+        player.team = 2 // Team 2: O and □
+      }
+    }
+
+    // Initialize player score for events
+    if (state.isEvent) {
+      player.score = 0
+      if (!state.scores) {
+        state.scores = {}
+      }
+      state.scores[player.symbol] = 0
+    }
+
+    // Add player to the game
+    state.players.push(player)
+    saveGameState(roomCode, state)
+    return state
+  } catch (error) {
+    console.error("Error adding player:", error)
+    return getGameState(roomCode) // Return current state in case of error
+  }
 }
 
 // Fix the turn tracking logic
 export const makeMove = (roomCode: string, playerId: string, row: number, col: number): GameState => {
-  const state = getGameState(roomCode)
+  try {
+    const state = getGameState(roomCode)
 
-  // Validate move
-  if (state.board[row][col] !== "" || state.winner || state.isDraw) {
-    return state
-  }
-
-  // Find the current player
-  const currentPlayer = state.players.find((p) => p.id === playerId)
-  if (!currentPlayer || currentPlayer.symbol !== state.currentTurn) {
-    return state
-  }
-
-  // Update the board
-  const newBoard = state.board.map((r, i) => r.map((c, j) => (i === row && j === col ? state.currentTurn : c)))
-
-  // Check for win
-  const boardSize = Number.parseInt(state.boardSize)
-  const winningLength = state.winningLength || 3
-  const winResult = checkWin(newBoard, state.currentTurn, boardSize, winningLength)
-  const isDraw = !winResult && newBoard.every((row) => row.every((cell) => cell !== ""))
-
-  // Update state
-  state.board = newBoard
-
-  // Determine next turn based on player count and available players
-  const playerCount = Number.parseInt(state.playerCount)
-  const availableSymbols = state.players.map((p) => p.symbol).sort()
-
-  if (playerCount === 2) {
-    // For 2 players, just toggle between X and O
-    state.currentTurn = state.currentTurn === "X" ? "O" : "X"
-  } else if (playerCount === 3) {
-    // For 3 players, cycle through available symbols
-    const currentIndex = availableSymbols.indexOf(state.currentTurn)
-    const nextIndex = (currentIndex + 1) % availableSymbols.length
-    state.currentTurn = availableSymbols[nextIndex]
-  } else if (playerCount === 4) {
-    // For 4 players (teams), alternate between teams
-    // Team 1: X and Δ, Team 2: O and □
-    if (state.currentTurn === "X") state.currentTurn = "O"
-    else if (state.currentTurn === "O") state.currentTurn = "Δ"
-    else if (state.currentTurn === "Δ") state.currentTurn = "□"
-    else state.currentTurn = "X"
-  }
-
-  if (winResult) {
-    state.winner = {
-      symbol: currentPlayer.symbol,
-      line: winResult,
+    // Validate move
+    if (state.board[row][col] !== "" || state.winner || state.isDraw) {
+      return state
     }
 
-    // Update scores for events
-    if (state.isEvent && state.scores) {
-      state.scores[currentPlayer.symbol] = (state.scores[currentPlayer.symbol] || 0) + 1
+    // Find the current player
+    const currentPlayer = state.players.find((p) => p.id === playerId)
+    if (!currentPlayer || currentPlayer.symbol !== state.currentTurn) {
+      return state
     }
+
+    // Update the board
+    const newBoard = state.board.map((r, i) => r.map((c, j) => (i === row && j === col ? state.currentTurn : c)))
+
+    // Check for win
+    const boardSize = Number.parseInt(state.boardSize)
+    const winningLength = state.winningLength || 3
+    const winResult = checkWin(newBoard, state.currentTurn, boardSize, winningLength)
+    const isDraw = !winResult && newBoard.every((row) => row.every((cell) => cell !== ""))
+
+    // Update state
+    state.board = newBoard
+
+    // Determine next turn based on player count and available players
+    const playerCount = Number.parseInt(state.playerCount)
+    const availableSymbols = state.players.map((p) => p.symbol).sort()
+
+    if (playerCount === 2) {
+      // For 2 players, just toggle between X and O
+      state.currentTurn = state.currentTurn === "X" ? "O" : "X"
+    } else if (playerCount === 3) {
+      // For 3 players, cycle through available symbols
+      const currentIndex = availableSymbols.indexOf(state.currentTurn)
+      const nextIndex = (currentIndex + 1) % availableSymbols.length
+      state.currentTurn = availableSymbols[nextIndex]
+    } else if (playerCount === 4) {
+      // For 4 players (teams), alternate between teams
+      // Team 1: X and Δ, Team 2: O and □
+      if (state.currentTurn === "X") state.currentTurn = "O"
+      else if (state.currentTurn === "O") state.currentTurn = "Δ"
+      else if (state.currentTurn === "Δ") state.currentTurn = "□"
+      else state.currentTurn = "X"
+    }
+
+    if (winResult) {
+      state.winner = {
+        symbol: currentPlayer.symbol,
+        line: winResult,
+      }
+
+      // Update scores for events
+      if (state.isEvent && state.scores) {
+        state.scores[currentPlayer.symbol] = (state.scores[currentPlayer.symbol] || 0) + 1
+      }
+    }
+
+    state.isDraw = isDraw
+
+    // Save and return updated state
+    saveGameState(roomCode, state)
+    return state
+  } catch (error) {
+    console.error("Error making move:", error)
+    return getGameState(roomCode) // Return current state in case of error
   }
-
-  state.isDraw = isDraw
-
-  // Save and return updated state
-  saveGameState(roomCode, state)
-  return state
 }
 
 // Check for win with variable winning length
@@ -381,72 +416,53 @@ const checkWin = (board: string[][], symbol: string, boardSize: number, winningL
 
 // Advance to next round in an event
 export const advanceToNextRound = (roomCode: string): GameState => {
-  const state = getGameState(roomCode)
+  try {
+    const state = getGameState(roomCode)
 
-  if (!state.isEvent) {
-    return state
+    if (!state.isEvent) {
+      return state
+    }
+
+    // Check if we've reached the maximum number of rounds
+    if (state.currentRound && state.totalRounds && state.currentRound >= state.totalRounds) {
+      // Event is complete
+      return state
+    }
+
+    // Reset the board but keep scores and advance round counter
+    return resetGameState(roomCode, undefined, undefined, undefined, undefined, true, undefined, true)
+  } catch (error) {
+    console.error("Error advancing to next round:", error)
+    return getGameState(roomCode) // Return current state in case of error
   }
-
-  // Check if we've reached the maximum number of rounds
-  if (state.currentRound && state.totalRounds && state.currentRound >= state.totalRounds) {
-    // Event is complete
-    return state
-  }
-
-  // Reset the board but keep scores and advance round counter
-  return resetGameState(roomCode, undefined, undefined, undefined, undefined, true, undefined, true)
 }
 
 // Check if a team/player has won the event
 export const checkEventWinner = (
   roomCode: string,
 ): { winner: string | null; winningScore: number; isDraw: boolean } => {
-  const state = getGameState(roomCode)
+  try {
+    const state = getGameState(roomCode)
 
-  if (!state.isEvent || !state.scores) {
-    return { winner: null, winningScore: 0, isDraw: false }
-  }
-
-  // Calculate score needed to win
-  const scoreToWin = state.totalRounds ? Math.ceil(Number(state.totalRounds) / 2) : 1
-
-  // Check if any player has reached the winning score
-  let highestScore = 0
-  let winners: string[] = []
-
-  Object.entries(state.scores).forEach(([symbol, score]) => {
-    if (score >= scoreToWin) {
-      if (score > highestScore) {
-        highestScore = score
-        winners = [symbol]
-      } else if (score === highestScore) {
-        winners.push(symbol)
-      }
+    if (!state.isEvent || !state.scores) {
+      return { winner: null, winningScore: 0, isDraw: false }
     }
-  })
 
-  // If we have a single winner
-  if (winners.length === 1) {
-    return { winner: winners[0], winningScore: highestScore, isDraw: false }
-  }
+    // Calculate score needed to win
+    const scoreToWin = state.totalRounds ? Math.ceil(Number(state.totalRounds) / 2) : 1
 
-  // If we have multiple winners (draw)
-  if (winners.length > 1) {
-    return { winner: null, winningScore: highestScore, isDraw: true }
-  }
-
-  // Check if all rounds have been played
-  if (state.currentRound && state.totalRounds && state.currentRound >= state.totalRounds) {
-    // Find the highest score
+    // Check if any player has reached the winning score
     let highestScore = 0
     let winners: string[] = []
 
     Object.entries(state.scores).forEach(([symbol, score]) => {
-      if (score > highestScore) {
-        highestScore = score
-        winners = [symbol]
-      } else if (score === highestScore) {
-        winners.push(symbol)
+      if (score >= scoreToWin) {
+        if (score > highestScore) {
+          highestScore = score
+          winners = [symbol]
+        } else if (score === highestScore) {
+          winners.push(symbol)
+        }
       }
     })
 
@@ -459,9 +475,38 @@ export const checkEventWinner = (
     if (winners.length > 1) {
       return { winner: null, winningScore: highestScore, isDraw: true }
     }
-  }
 
-  return { winner: null, winningScore: 0, isDraw: false }
+    // Check if all rounds have been played
+    if (state.currentRound && state.totalRounds && state.currentRound >= state.totalRounds) {
+      // Find the highest score
+      let highestScore = 0
+      let winners: string[] = []
+
+      Object.entries(state.scores).forEach(([symbol, score]) => {
+        if (score > highestScore) {
+          highestScore = score
+          winners = [symbol]
+        } else if (score === highestScore) {
+          winners.push(symbol)
+        }
+      }
+
+      // If we have a single winner\
+      if (winners.length === 1) {
+        return { winner: winners[0], winningScore: highestScore, isDraw: false }
+      }
+
+      // If we have multiple winners (draw)
+      if (winners.length > 1) {
+        return { winner: null, winningScore: highestScore, isDraw: true }
+      }
+    }
+
+    return { winner: null, winningScore: 0, isDraw: false }
+  } catch (error) {
+    console.error("Error checking event winner:", error)
+    return { winner: null, winningScore: 0, isDraw: false } // Return default in case of error
+  }
 }
 
 // Get chat messages

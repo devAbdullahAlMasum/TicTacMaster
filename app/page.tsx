@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ArrowRight, Grid3X3, Users, Calendar, Trophy, Sparkles } from "lucide-react"
+import { ArrowRight, Grid3X3, Users, Calendar, Trophy, Sparkles, Bot, Zap } from "lucide-react"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -31,15 +31,21 @@ export default function HomePage() {
               </div>
               <p className="text-blue-600 dark:text-blue-400 max-w-2xl">
                 Create or join multiplayer games with customizable board sizes and player counts. Challenge friends in
-                tournaments or quick matches!
+                tournaments or test your skills against AI opponents!
               </p>
             </div>
           </div>
 
           <div className="flex gap-4 mt-2">
+            <Link href="/single-player">
+              <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-none">
+                <Bot className="mr-2 h-4 w-4" />
+                Play vs AI
+              </Button>
+            </Link>
             <Link href="/create-room">
               <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-none">
-                Get Started
+                Multiplayer
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -55,7 +61,38 @@ export default function HomePage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-4">
+          {/* Single Player Card */}
+          <Card className="border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 hover:shadow-md transition-all group overflow-hidden">
+            <div className="absolute w-20 h-20 -right-5 -top-5 bg-purple-200/50 dark:bg-purple-800/30 rounded-full blur-xl group-hover:bg-purple-300/50 dark:group-hover:bg-purple-700/30 transition-all"></div>
+            <div className="absolute top-3 right-3">
+              <Badge className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200">NEW</Badge>
+            </div>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-lg text-purple-700 dark:text-purple-300">
+                <Bot className="mr-2 h-5 w-5" />
+                Single Player
+              </CardTitle>
+              <CardDescription className="text-purple-600/80 dark:text-purple-400/80">
+                Challenge AI opponents
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-3">
+              <p className="text-sm text-purple-600/80 dark:text-purple-400/80">
+                Test your skills against AI with Easy, Medium, and Hard difficulty levels.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Link href="/single-player" className="w-full">
+                <Button className="w-full group bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-none">
+                  Play vs AI
+                  <Zap className="ml-2 h-4 w-4 transition-transform group-hover:scale-110" />
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
+
+          {/* Create Game Card */}
           <Card className="border border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 hover:shadow-md transition-all group overflow-hidden">
             <div className="absolute w-20 h-20 -right-5 -top-5 bg-blue-200/50 dark:bg-blue-800/30 rounded-full blur-xl group-hover:bg-blue-300/50 dark:group-hover:bg-blue-700/30 transition-all"></div>
             <CardHeader className="pb-3">
@@ -82,22 +119,23 @@ export default function HomePage() {
             </CardFooter>
           </Card>
 
-          <Card className="border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 hover:shadow-md transition-all group overflow-hidden">
-            <div className="absolute w-20 h-20 -right-5 -top-5 bg-purple-200/50 dark:bg-purple-800/30 rounded-full blur-xl group-hover:bg-purple-300/50 dark:group-hover:bg-purple-700/30 transition-all"></div>
+          {/* Create Tournament Card */}
+          <Card className="border border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 hover:shadow-md transition-all group overflow-hidden">
+            <div className="absolute w-20 h-20 -right-5 -top-5 bg-amber-200/50 dark:bg-amber-800/30 rounded-full blur-xl group-hover:bg-amber-300/50 dark:group-hover:bg-amber-700/30 transition-all"></div>
             <div className="absolute top-3 right-3">
-              <Badge className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200">BETA</Badge>
+              <Badge className="bg-amber-200 text-amber-800 dark:bg-amber-800 dark:text-amber-200">BETA</Badge>
             </div>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center text-lg text-purple-700 dark:text-purple-300">
+              <CardTitle className="flex items-center text-lg text-amber-700 dark:text-amber-300">
                 <Calendar className="mr-2 h-5 w-5" />
                 Create Event
               </CardTitle>
-              <CardDescription className="text-purple-600/80 dark:text-purple-400/80">
+              <CardDescription className="text-amber-600/80 dark:text-amber-400/80">
                 Host a custom game event
               </CardDescription>
             </CardHeader>
             <CardContent className="pb-3">
-              <p className="text-sm text-purple-600/80 dark:text-purple-400/80">
+              <p className="text-sm text-amber-600/80 dark:text-amber-400/80">
                 Create a fully customizable event with multiple rounds, time limits, and special rules.
               </p>
             </CardContent>
@@ -105,7 +143,7 @@ export default function HomePage() {
               <Link href="/create-event" className="w-full">
                 <Button
                   variant="outline"
-                  className="w-full group border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-200/50 dark:hover:bg-purple-800/50"
+                  className="w-full group border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-200/50 dark:hover:bg-amber-800/50"
                 >
                   Create Event
                   <Calendar className="ml-2 h-4 w-4 transition-transform group-hover:scale-110" />
@@ -114,6 +152,7 @@ export default function HomePage() {
             </CardFooter>
           </Card>
 
+          {/* Join Game Card */}
           <Card className="border border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 hover:shadow-md transition-all group overflow-hidden">
             <div className="absolute w-20 h-20 -right-5 -top-5 bg-emerald-200/50 dark:bg-emerald-800/30 rounded-full blur-xl group-hover:bg-emerald-300/50 dark:group-hover:bg-emerald-700/30 transition-all"></div>
             <CardHeader className="pb-3">
@@ -285,6 +324,65 @@ export default function HomePage() {
             </Card>
           </div>
 
+          {/* AI Mode Card */}
+          <Card className="overflow-hidden border border-purple-200 dark:border-purple-800 bg-gradient-to-r from-purple-50 to-pink-100 dark:from-purple-950 dark:to-pink-900 hover:shadow-md transition-all group">
+            <div className="absolute w-32 h-32 -right-10 -top-10 bg-purple-200/30 dark:bg-purple-800/20 rounded-full blur-xl group-hover:bg-purple-300/30 dark:group-hover:bg-purple-700/20 transition-all"></div>
+            <div className="absolute w-24 h-24 right-20 bottom-5 bg-pink-200/20 dark:bg-pink-800/10 rounded-full blur-xl group-hover:bg-pink-300/20 dark:group-hover:bg-pink-700/10 transition-all"></div>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl text-purple-700 dark:text-purple-300 flex items-center">
+                  <Bot className="mr-2 h-5 w-5" />
+                  AI Challenge Mode
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Badge className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200">New!</Badge>
+                </div>
+              </div>
+              <CardDescription className="text-purple-600/80 dark:text-purple-400/80">
+                Test your skills against intelligent AI opponents
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-6">
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="bg-white/60 dark:bg-black/20 rounded-lg p-3 flex flex-col items-center">
+                  <div className="text-green-600 dark:text-green-400 font-semibold mb-2 flex items-center gap-1">
+                    <Zap className="h-4 w-4" />
+                    Easy Mode
+                  </div>
+                  <p className="text-sm text-center text-purple-700/70 dark:text-purple-300/70">
+                    Perfect for beginners learning the game
+                  </p>
+                </div>
+                <div className="bg-white/60 dark:bg-black/20 rounded-lg p-3 flex flex-col items-center">
+                  <div className="text-amber-600 dark:text-amber-400 font-semibold mb-2 flex items-center gap-1">
+                    <Bot className="h-4 w-4" />
+                    Medium Mode
+                  </div>
+                  <p className="text-sm text-center text-purple-700/70 dark:text-purple-300/70">
+                    Balanced challenge with strategic thinking
+                  </p>
+                </div>
+                <div className="bg-white/60 dark:bg-black/20 rounded-lg p-3 flex flex-col items-center">
+                  <div className="text-red-600 dark:text-red-400 font-semibold mb-2 flex items-center gap-1">
+                    <Trophy className="h-4 w-4" />
+                    Hard Mode
+                  </div>
+                  <p className="text-sm text-center text-purple-700/70 dark:text-purple-300/70">
+                    Maximum challenge using advanced algorithms
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 text-center">
+                <Link href="/single-player">
+                  <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-none">
+                    Challenge AI
+                    <Bot className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Event Mode Card */}
           <Card className="overflow-hidden border border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-100 dark:from-amber-950 dark:to-orange-900 hover:shadow-md transition-all group">
             <div className="absolute w-32 h-32 -right-10 -top-10 bg-amber-200/30 dark:bg-amber-800/20 rounded-full blur-xl group-hover:bg-amber-300/30 dark:group-hover:bg-amber-700/20 transition-all"></div>
@@ -296,8 +394,7 @@ export default function HomePage() {
                   Tournament Mode
                 </CardTitle>
                 <div className="flex gap-2">
-                  <Badge className="bg-amber-200 text-amber-800 dark:bg-amber-800 dark:text-amber-200">New!</Badge>
-                  <Badge className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200">BETA</Badge>
+                  <Badge className="bg-amber-200 text-amber-800 dark:bg-amber-800 dark:text-amber-200">BETA</Badge>
                 </div>
               </div>
               <CardDescription className="text-amber-600/80 dark:text-amber-400/80">
