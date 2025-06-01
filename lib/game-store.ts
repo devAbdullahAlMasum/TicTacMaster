@@ -491,7 +491,7 @@ export const checkEventWinner = (
         }
       }
 
-      // If we have a single winner\
+      // If we have a single winner
       if (winners.length === 1) {
         return { winner: winners[0], winningScore: highestScore, isDraw: false }
       }
