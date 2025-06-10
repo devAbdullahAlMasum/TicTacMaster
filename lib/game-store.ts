@@ -489,7 +489,7 @@ export const checkEventWinner = (
         } else if (score === highestScore) {
           winners.push(symbol)
         }
-      }
+      })
 
       // If we have a single winner
       if (winners.length === 1) {
