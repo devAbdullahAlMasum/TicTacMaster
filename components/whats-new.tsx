@@ -11,7 +11,7 @@ export function WhatsNew() {
 
   // Show popup automatically on first visit
   useEffect(() => {
-    const seen = localStorage.getItem("seen-whats-new-v2.0")
+    const seen = localStorage.getItem("seen-whats-new-v2.1")
     if (!seen) {
       setOpen(true)
       setHasSeenUpdate(false)
@@ -22,11 +22,46 @@ export function WhatsNew() {
 
   const handleClose = () => {
     setOpen(false)
-    localStorage.setItem("seen-whats-new-v2.0", "true")
+    localStorage.setItem("seen-whats-new-v2.1", "true")
     setHasSeenUpdate(true)
   }
 
   const updates = [
+    {
+      version: "2.1",
+      date: "June 11, 2025",
+      title: "New Update: Local Multiplayer & Optimizations",
+      description: "Play with friends on the same device plus performance improvements and optimizations!",
+      features: [
+        {
+          title: "👥 Local Multiplayer Mode",
+          description: "Play with friends on the same device - perfect for face-to-face gaming",
+          highlight: true,
+        },
+        {
+          title: "🔄 Turn-Based Gameplay",
+          description: "Automatic turn management for 2-4 players on one device",
+          highlight: true,
+        },
+        {
+          title: "📊 Score Tracking",
+          description: "Keep track of wins across multiple rounds in local games",
+          highlight: true,
+        },
+        {
+          title: "⚡ Performance Optimizations",
+          description: "Improved game logic and faster rendering for smoother gameplay",
+        },
+        {
+          title: "🎨 Enhanced UI",
+          description: "Better visual indicators and improved user experience",
+        },
+        {
+          title: "🐛 Bug Fixes",
+          description: "Fixed various issues and improved overall stability",
+        },
+      ],
+    },
     {
       version: "2.0",
       date: "June 1, 2025",
@@ -101,7 +136,7 @@ export function WhatsNew() {
           <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
         )}
         <Badge className="absolute -top-2 -right-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-1.5 py-0.5 text-[10px]">
-          2.0
+          2.1
         </Badge>
       </Button>
     )

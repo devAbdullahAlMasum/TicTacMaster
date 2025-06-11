@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ArrowRight, Grid3X3, Users, Calendar, Trophy, Sparkles, Bot, Zap } from "lucide-react"
+import { ArrowRight, Grid3X3, Users, Trophy, Sparkles, Bot, Zap, UserCheck } from "lucide-react"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -26,17 +26,23 @@ export default function HomePage() {
                   TicTacMaster
                 </h1>
                 <Badge className="ml-3 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/30">
-                  BETA
+                  v2.1
                 </Badge>
               </div>
               <p className="text-blue-600 dark:text-blue-400 max-w-2xl">
-                Create or join multiplayer games with customizable board sizes and player counts. Challenge friends in
-                tournaments or test your skills against AI opponents!
+                Play solo against AI, with friends locally, or online with customizable board sizes and player counts.
+                Challenge friends in tournaments or test your skills against intelligent opponents!
               </p>
             </div>
           </div>
 
           <div className="flex gap-4 mt-2">
+            <Link href="/local-multiplayer">
+              <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white border-none">
+                <UserCheck className="mr-2 h-4 w-4" />
+                Local Play
+              </Button>
+            </Link>
             <Link href="/single-player">
               <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-none">
                 <Bot className="mr-2 h-4 w-4" />
@@ -45,16 +51,8 @@ export default function HomePage() {
             </Link>
             <Link href="/create-room">
               <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-none">
-                Multiplayer
+                Online Play
                 <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/join-room">
-              <Button
-                variant="outline"
-                className="border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900"
-              >
-                Join a Game
               </Button>
             </Link>
           </div>
@@ -62,11 +60,41 @@ export default function HomePage() {
 
         {/* Quick Actions */}
         <div className="grid gap-6 md:grid-cols-4">
+          {/* Local Multiplayer Card */}
+          <Card className="border border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 hover:shadow-md transition-all group overflow-hidden">
+            <div className="absolute w-20 h-20 -right-5 -top-5 bg-emerald-200/50 dark:bg-emerald-800/30 rounded-full blur-xl group-hover:bg-emerald-300/50 dark:group-hover:bg-emerald-700/30 transition-all"></div>
+            <div className="absolute top-3 right-3">
+              <Badge className="bg-emerald-200 text-emerald-800 dark:bg-emerald-800 dark:text-emerald-200">NEW</Badge>
+            </div>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-lg text-emerald-700 dark:text-emerald-300">
+                <UserCheck className="mr-2 h-5 w-5" />
+                Local Multiplayer
+              </CardTitle>
+              <CardDescription className="text-emerald-600/80 dark:text-emerald-400/80">
+                Play with friends on same device
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-3">
+              <p className="text-sm text-emerald-600/80 dark:text-emerald-400/80">
+                Take turns on the same device. Perfect for face-to-face gaming with friends and family.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Link href="/local-multiplayer" className="w-full">
+                <Button className="w-full group bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white border-none">
+                  Start Local Game
+                  <Users className="ml-2 h-4 w-4 transition-transform group-hover:scale-110" />
+                </Button>
+              </Link>
+            </CardFooter>
+          </Card>
+
           {/* Single Player Card */}
           <Card className="border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 hover:shadow-md transition-all group overflow-hidden">
             <div className="absolute w-20 h-20 -right-5 -top-5 bg-purple-200/50 dark:bg-purple-800/30 rounded-full blur-xl group-hover:bg-purple-300/50 dark:group-hover:bg-purple-700/30 transition-all"></div>
             <div className="absolute top-3 right-3">
-              <Badge className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200">NEW</Badge>
+              <Badge className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200">HOT</Badge>
             </div>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center text-lg text-purple-700 dark:text-purple-300">
@@ -98,10 +126,10 @@ export default function HomePage() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center text-lg text-blue-700 dark:text-blue-300">
                 <Grid3X3 className="mr-2 h-5 w-5" />
-                Create Game Room
+                Create Online Game
               </CardTitle>
               <CardDescription className="text-blue-600/80 dark:text-blue-400/80">
-                Start a new customizable game
+                Start a new online game room
               </CardDescription>
             </CardHeader>
             <CardContent className="pb-3">
@@ -119,53 +147,20 @@ export default function HomePage() {
             </CardFooter>
           </Card>
 
-          {/* Create Tournament Card */}
+          {/* Join Game Card */}
           <Card className="border border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 hover:shadow-md transition-all group overflow-hidden">
             <div className="absolute w-20 h-20 -right-5 -top-5 bg-amber-200/50 dark:bg-amber-800/30 rounded-full blur-xl group-hover:bg-amber-300/50 dark:group-hover:bg-amber-700/30 transition-all"></div>
-            <div className="absolute top-3 right-3">
-              <Badge className="bg-amber-200 text-amber-800 dark:bg-amber-800 dark:text-amber-200">BETA</Badge>
-            </div>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center text-lg text-amber-700 dark:text-amber-300">
-                <Calendar className="mr-2 h-5 w-5" />
-                Create Event
+                <Users className="mr-2 h-5 w-5" />
+                Join Online Game
               </CardTitle>
               <CardDescription className="text-amber-600/80 dark:text-amber-400/80">
-                Host a custom game event
+                Join an existing online game
               </CardDescription>
             </CardHeader>
             <CardContent className="pb-3">
               <p className="text-sm text-amber-600/80 dark:text-amber-400/80">
-                Create a fully customizable event with multiple rounds, time limits, and special rules.
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Link href="/create-event" className="w-full">
-                <Button
-                  variant="outline"
-                  className="w-full group border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-200/50 dark:hover:bg-amber-800/50"
-                >
-                  Create Event
-                  <Calendar className="ml-2 h-4 w-4 transition-transform group-hover:scale-110" />
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
-
-          {/* Join Game Card */}
-          <Card className="border border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 hover:shadow-md transition-all group overflow-hidden">
-            <div className="absolute w-20 h-20 -right-5 -top-5 bg-emerald-200/50 dark:bg-emerald-800/30 rounded-full blur-xl group-hover:bg-emerald-300/50 dark:group-hover:bg-emerald-700/30 transition-all"></div>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center text-lg text-emerald-700 dark:text-emerald-300">
-                <Users className="mr-2 h-5 w-5" />
-                Join Game Room
-              </CardTitle>
-              <CardDescription className="text-emerald-600/80 dark:text-emerald-400/80">
-                Join an existing game
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pb-3">
-              <p className="text-sm text-emerald-600/80 dark:text-emerald-400/80">
                 Enter a room code to join a friend's game and start playing immediately.
               </p>
             </CardContent>
@@ -173,7 +168,7 @@ export default function HomePage() {
               <Link href="/join-room" className="w-full">
                 <Button
                   variant="outline"
-                  className="w-full group border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200/50 dark:hover:bg-emerald-800/50"
+                  className="w-full group border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-200/50 dark:hover:bg-amber-800/50"
                 >
                   Join Game
                   <Users className="ml-2 h-4 w-4 transition-transform group-hover:scale-110" />
@@ -324,6 +319,58 @@ export default function HomePage() {
             </Card>
           </div>
 
+          {/* Local Multiplayer Mode Card */}
+          <Card className="overflow-hidden border border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-100 dark:from-emerald-950 dark:to-teal-900 hover:shadow-md transition-all group">
+            <div className="absolute w-32 h-32 -right-10 -top-10 bg-emerald-200/30 dark:bg-emerald-800/20 rounded-full blur-xl group-hover:bg-emerald-300/30 dark:group-hover:bg-emerald-700/20 transition-all"></div>
+            <div className="absolute w-24 h-24 right-20 bottom-5 bg-teal-200/20 dark:bg-teal-800/10 rounded-full blur-xl group-hover:bg-teal-300/20 dark:group-hover:bg-teal-700/10 transition-all"></div>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl text-emerald-700 dark:text-emerald-300 flex items-center">
+                  <UserCheck className="mr-2 h-5 w-5" />
+                  Local Multiplayer Mode
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Badge className="bg-emerald-200 text-emerald-800 dark:bg-emerald-800 dark:text-emerald-200">
+                    New!
+                  </Badge>
+                </div>
+              </div>
+              <CardDescription className="text-emerald-600/80 dark:text-emerald-400/80">
+                Play with friends on the same device - perfect for face-to-face gaming
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-6">
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="bg-white/60 dark:bg-black/20 rounded-lg p-3 flex flex-col items-center">
+                  <div className="text-emerald-600 dark:text-emerald-400 font-semibold mb-2">Same Device</div>
+                  <p className="text-sm text-center text-emerald-700/70 dark:text-emerald-300/70">
+                    Take turns on one device - no internet required
+                  </p>
+                </div>
+                <div className="bg-white/60 dark:bg-black/20 rounded-lg p-3 flex flex-col items-center">
+                  <div className="text-emerald-600 dark:text-emerald-400 font-semibold mb-2">2-4 Players</div>
+                  <p className="text-sm text-center text-emerald-700/70 dark:text-emerald-300/70">
+                    Support for 2, 3, or 4 players with automatic turn management
+                  </p>
+                </div>
+                <div className="bg-white/60 dark:bg-black/20 rounded-lg p-3 flex flex-col items-center">
+                  <div className="text-emerald-600 dark:text-emerald-400 font-semibold mb-2">Score Tracking</div>
+                  <p className="text-sm text-center text-emerald-700/70 dark:text-emerald-300/70">
+                    Keep track of wins across multiple rounds
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 text-center">
+                <Link href="/local-multiplayer">
+                  <Button className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white border-none">
+                    Start Local Game
+                    <UserCheck className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* AI Mode Card */}
           <Card className="overflow-hidden border border-purple-200 dark:border-purple-800 bg-gradient-to-r from-purple-50 to-pink-100 dark:from-purple-950 dark:to-pink-900 hover:shadow-md transition-all group">
             <div className="absolute w-32 h-32 -right-10 -top-10 bg-purple-200/30 dark:bg-purple-800/20 rounded-full blur-xl group-hover:bg-purple-300/30 dark:group-hover:bg-purple-700/20 transition-all"></div>
@@ -335,7 +382,7 @@ export default function HomePage() {
                   AI Challenge Mode
                 </CardTitle>
                 <div className="flex gap-2">
-                  <Badge className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200">New!</Badge>
+                  <Badge className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200">Hot!</Badge>
                 </div>
               </div>
               <CardDescription className="text-purple-600/80 dark:text-purple-400/80">

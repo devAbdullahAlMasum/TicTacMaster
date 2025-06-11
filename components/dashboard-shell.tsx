@@ -8,7 +8,7 @@ import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Grid3X3, Home, Settings, Users, Menu, Trophy, Crown, Bot } from "lucide-react"
+import { Grid3X3, Home, Settings, Users, Menu, Trophy, Crown, Bot, UserCheck } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
@@ -44,13 +44,20 @@ export function DashboardShell({ children }: DashboardShellProps) {
       href: "/single-player",
       icon: Bot,
       description: "Play against AI",
+      badge: "HOT",
+    },
+    {
+      name: "Local Multiplayer",
+      href: "/local-multiplayer",
+      icon: UserCheck,
+      description: "Play with friends on same device",
       badge: "NEW",
     },
     {
       name: "Create Game",
       href: "/create-room",
       icon: Grid3X3,
-      description: "Start a new game",
+      description: "Start a new online game",
     },
     {
       name: "Create Tournament",
@@ -82,37 +89,35 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="relative overflow-hidden border-b border-white/20 backdrop-blur-sm">
-      </div>
-
-      {/* User Profile */}
-      <div className="p-6">
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10 p-4">
-          <div className="absolute -top-6 -right-6 h-16 w-16 rounded-full bg-blue-400/20 blur-xl"></div>
-          <div className="absolute -bottom-6 -left-6 h-16 w-16 rounded-full bg-indigo-400/20 blur-xl"></div>
+      {/* User Profile - Compact */}
+      <div className="p-4">
+        <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10 p-3">
+          <div className="absolute -top-4 -right-4 h-12 w-12 rounded-full bg-blue-400/20 blur-xl"></div>
+          <div className="absolute -bottom-4 -left-4 h-12 w-12 rounded-full bg-indigo-400/20 blur-xl"></div>
           <div className="relative flex items-center gap-3">
-            <Avatar className="h-12 w-12 border-2 border-white/20 shadow-lg">
+            <Avatar className="h-10 w-10 border-2 border-white/20 shadow-lg">
               <AvatarImage src="/avatars/avatar-1.png" alt="User" />
-              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">TM</AvatarFallback>
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-sm">
+                TM
+              </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium text-white">Welcome!</p>
-              <p className="text-sm text-blue-100">Ready to play?</p>
+              <p className="font-medium text-white text-sm">Welcome!</p>
+              <p className="text-xs text-blue-100">Ready to play?</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-6 pb-6">
-        <div className="space-y-2">
+      {/* Navigation - Compact */}
+      <nav className="flex-1 px-4 min-h-0">
+        <div className="space-y-1">
           {navigationItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "group relative overflow-hidden rounded-xl p-4 transition-all duration-200 block",
+                "group relative overflow-hidden rounded-lg p-3 transition-all duration-200 block",
                 pathname === item.href
                   ? "bg-gradient-to-r from-white/20 to-white/10 text-white shadow-lg"
                   : "text-blue-100 hover:bg-white/10 hover:text-white",
@@ -123,22 +128,24 @@ export function DashboardShell({ children }: DashboardShellProps) {
               <div className="relative flex items-center gap-3">
                 <div
                   className={cn(
-                    "flex items-center justify-center h-10 w-10 rounded-lg transition-colors",
+                    "flex items-center justify-center h-8 w-8 rounded-lg transition-colors flex-shrink-0",
                     pathname === item.href
                       ? "bg-white/20 text-white"
                       : "bg-white/10 text-blue-200 group-hover:bg-white/20 group-hover:text-white",
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className="h-4 w-4" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{item.name}</span>
+                    <span className="font-medium text-sm truncate">{item.name}</span>
                     {item.badge && (
-                      <Badge className="text-xs bg-white/20 text-white border-white/20">{item.badge}</Badge>
+                      <Badge className="text-xs bg-white/20 text-white border-white/20 px-1.5 py-0.5 h-5 flex-shrink-0">
+                        {item.badge}
+                      </Badge>
                     )}
                   </div>
-                  <p className="text-sm opacity-80 mt-0.5">{item.description}</p>
+                  <p className="text-xs opacity-80 mt-0.5 truncate">{item.description}</p>
                 </div>
               </div>
             </Link>
@@ -146,10 +153,10 @@ export function DashboardShell({ children }: DashboardShellProps) {
         </div>
       </nav>
 
-      {/* Footer with Theme Toggle and What's New */}
-      <div className="p-6 border-t border-white/10 space-y-4">
+      {/* Footer - Compact */}
+      <div className="p-4 border-t border-white/10 space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-blue-100">Theme</span>
+          <span className="text-xs text-blue-100">Theme</span>
           <ThemeToggle />
         </div>
         <div className="w-full">
