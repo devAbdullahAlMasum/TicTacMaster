@@ -107,8 +107,8 @@ export default function CreateEventPage() {
 
   return (
     <DashboardShell>
-      <div className="flex flex-col items-center max-w-3xl mx-auto">
-        <Card className="w-full border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 hover:shadow-md transition-all group overflow-hidden">
+      <div className="container max-w-3xl mx-auto px-4 py-6">
+        <Card className="border border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 hover:shadow-md transition-all group overflow-hidden">
           <div className="absolute w-40 h-40 -right-10 -top-10 bg-purple-200/30 dark:bg-purple-800/20 rounded-full blur-xl group-hover:bg-purple-300/30 dark:group-hover:bg-purple-700/20 transition-all"></div>
           <div className="absolute w-32 h-32 right-40 bottom-10 bg-indigo-200/20 dark:bg-indigo-800/10 rounded-full blur-xl group-hover:bg-indigo-300/20 dark:group-hover:bg-indigo-700/10 transition-all"></div>
 

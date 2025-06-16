@@ -1,0 +1,1 @@
+A short, sharp, and slightly jarring sound to indicate an invalid move or error. A buzzer-like sound or a dull thud would work well.

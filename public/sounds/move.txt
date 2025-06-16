@@ -1,0 +1,1 @@
+A quick, satisfying sound for when a player makes a move (placing an X or O). A soft 'thock' or a gentle 'pop' would be suitable.

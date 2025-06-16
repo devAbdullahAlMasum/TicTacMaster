@@ -1,3 +1,5 @@
+import { create } from "zustand"
+
 // This file creates a centralized store for game state using localStorage
 // to simulate a server and enable communication between browser tabs/windows
 
@@ -8,6 +10,7 @@ type Player = {
   symbol: string
   team?: number // For team games (4 players)
   score?: number // For tracking wins in events
+  isReady: boolean
 }
 
 type GameState = {
@@ -677,4 +680,176 @@ export const getSettings = () => {
     defaultPlayerName: "",
     defaultAvatarId: "1",
   }
+}
+
+// Simple in-memory store without any persistence
+type GameStore = {
+  // Game state
+  currentGame: {
+    roomCode: string
+    players: Array<{
+      id: string
+      name: string
+      symbol: string
+      avatarId: number
+      isReady: boolean
+    }>
+    board: string[][]
+    currentTurn: string
+    winner: { symbol: string; line: number[][] } | null
+    isDraw: boolean
+    gameStarted: boolean
+    boardSize: number
+  } | null
+
+  // Settings
+  settings: {
+    theme: "light" | "dark" | "system"
+    soundEnabled: boolean
+    chatFilter: boolean
+  }
+
+  // Actions
+  setCurrentGame: (game: GameStore["currentGame"]) => void
+  updateGameState: (updates: Partial<NonNullable<GameStore["currentGame"]>>) => void
+  clearGame: () => void
+  updateSettings: (settings: Partial<GameStore["settings"]>) => void
+  resetStore: () => void
+}
+
+// Default settings
+const defaultSettings = {
+  theme: "system" as const,
+  soundEnabled: true,
+  chatFilter: false,
+}
+
+export const useGameStore = create<GameStore>((set, get) => ({
+  currentGame: null,
+  settings: defaultSettings,
+
+  setCurrentGame: (game) => set({ currentGame: game }),
+
+  updateGameState: (updates) =>
+    set((state) => ({
+      currentGame: state.currentGame ? { ...state.currentGame, ...updates } : null,
+    })),
+
+  clearGame: () => set({ currentGame: null }),
+
+  updateSettings: (newSettings) =>
+    set((state) => ({
+      settings: { ...state.settings, ...newSettings },
+    })),
+
+  resetStore: () =>
+    set({
+      currentGame: null,
+      settings: defaultSettings,
+    }),
+}))
+
+// Helper functions that work without localStorage
+export const generateRoomCode = (): string => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  let result = ""
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return result
+}
+
+export const createEmptyBoard = (size: number): string[][] => {
+  return Array(size)
+    .fill("")
+    .map(() => Array(size).fill(""))
+}
+
+export const checkWinCondition = (board: string[][], symbol: string, boardSize: number): number[][] | null => {
+  const winningLength = 3
+
+  // Check rows
+  for (let i = 0; i < boardSize; i++) {
+    for (let j = 0; j <= boardSize - winningLength; j++) {
+      let win = true
+      for (let k = 0; k < winningLength; k++) {
+        if (board[i][j + k] !== symbol) {
+          win = false
+          break
+        }
+      }
+      if (win) {
+        return Array(winningLength)
+          .fill(0)
+          .map((_, k) => [i, j + k])
+      }
+    }
+  }
+
+  // Check columns
+  for (let i = 0; i <= boardSize - winningLength; i++) {
+    for (let j = 0; j < boardSize; j++) {
+      let win = true
+      for (let k = 0; k < winningLength; k++) {
+        if (board[i + k][j] !== symbol) {
+          win = false
+          break
+        }
+      }
+      if (win) {
+        return Array(winningLength)
+          .fill(0)
+          .map((_, k) => [i + k, j])
+      }
+    }
+  }
+
+  // Check diagonals (top-left to bottom-right)
+  for (let i = 0; i <= boardSize - winningLength; i++) {
+    for (let j = 0; j <= boardSize - winningLength; j++) {
+      let win = true
+      for (let k = 0; k < winningLength; k++) {
+        if (board[i + k][j + k] !== symbol) {
+          win = false
+          break
+        }
+      }
+      if (win) {
+        return Array(winningLength)
+          .fill(0)
+          .map((_, k) => [i + k, j + k])
+      }
+    }
+  }
+
+  // Check diagonals (top-right to bottom-left)
+  for (let i = 0; i <= boardSize - winningLength; i++) {
+    for (let j = winningLength - 1; j < boardSize; j++) {
+      let win = true
+      for (let k = 0; k < winningLength; k++) {
+        if (board[i + k][j - k] !== symbol) {
+          win = false
+          break
+        }
+      }
+      if (win) {
+        return Array(winningLength)
+          .fill(0)
+          .map((_, k) => [i + k, j - k])
+      }
+    }
+  }
+
+  return null
+}
+
+export const isDraw = (board: string[][]): boolean => {
+  return board.every((row) => row.every((cell) => cell !== ""))
+}
+
+export const getNextPlayer = (currentSymbol: string, players: Array<{ symbol: string }>): string => {
+  const symbols = players.map((p) => p.symbol)
+  const currentIndex = symbols.indexOf(currentSymbol)
+  const nextIndex = (currentIndex + 1) % symbols.length
+  return symbols[nextIndex]
 }

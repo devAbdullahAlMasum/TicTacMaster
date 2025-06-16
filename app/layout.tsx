@@ -1,16 +1,17 @@
 import type React from "react"
-import "@/app/globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
-import { FloatingLogo } from "@/components/floating-logo"
+import { SettingsProvider } from "@/hooks/use-settings"
+import { GlobalSoundProvider } from "@/components/global-sound-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "TicTacMaster - Multiplayer Tic-Tac-Toe",
-  description: "Play Tic-Tac-Toe with friends in real-time with customizable boards and tournaments",
+  title: "TicTacMaster",
+  description: "The ultimate Tic Tac Toe experience",
     generator: 'v0.dev'
 }
 
@@ -21,14 +22,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/favicon.ico" />
-      </head>
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
-          <FloatingLogo />
-          <Toaster />
+      <body className={inter.className} suppressHydrationWarning>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <SettingsProvider>
+            <GlobalSoundProvider>{children}</GlobalSoundProvider>
+            <Toaster />
+          </SettingsProvider>
         </ThemeProvider>
       </body>
     </html>

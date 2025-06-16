@@ -8,11 +8,13 @@ import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Grid3X3, Home, Settings, Users, Menu, Trophy, Crown, Bot, UserCheck } from "lucide-react"
+import { Grid3X3, Home, Settings, Users, Menu, Trophy, Crown, Bot, UserCheck, X } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { WhatsNew } from "@/components/whats-new"
+import { useSettings } from "@/hooks/use-settings"
+import { useSoundEffects } from "@/lib/sound-manager"
 
 interface DashboardShellProps {
   children: React.ReactNode
@@ -22,6 +24,8 @@ export function DashboardShell({ children }: DashboardShellProps) {
   const pathname = usePathname()
   const [isMounted, setIsMounted] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const { settings } = useSettings()
+  const { playClickSound } = useSoundEffects()
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -110,19 +114,22 @@ export function DashboardShell({ children }: DashboardShellProps) {
       </div>
 
       {/* Navigation - Compact */}
-      <nav className="flex-1 px-4 min-h-0">
+      <nav className="flex-1 px-4 min-h-0 overflow-y-auto custom-scrollbar">
         <div className="space-y-1">
           {navigationItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => {
+                playClickSound();
+                setIsMobileOpen(false);
+              }}
               className={cn(
                 "group relative overflow-hidden rounded-lg p-3 transition-all duration-200 block",
                 pathname === item.href
                   ? "bg-gradient-to-r from-white/20 to-white/10 text-white shadow-lg"
                   : "text-blue-100 hover:bg-white/10 hover:text-white",
               )}
-              onClick={() => setIsMobileOpen(false)}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="relative flex items-center gap-3">
@@ -180,16 +187,28 @@ export function DashboardShell({ children }: DashboardShellProps) {
             <Button
               variant="outline"
               size="icon"
-              className="fixed top-4 left-4 z-50 h-12 w-12 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg border-white/20"
+              className="fixed top-4 left-4 z-50 h-10 w-10 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg border-white/20 touch-manipulation"
+              onClick={playClickSound}
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle Menu</span>
             </Button>
           </SheetTrigger>
           <SheetContent
             side="left"
-            className="w-80 p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 border-none"
+            className="w-[85%] max-w-[300px] p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 border-none"
           >
+            <div className="absolute top-4 right-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full bg-white/10 text-white hover:bg-white/20"
+                onClick={() => { playClickSound(); setIsMobileOpen(false); }}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </Button>
+            </div>
             <SidebarContent />
           </SheetContent>
         </Sheet>
@@ -198,7 +217,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col md:ml-80">
         {/* Mobile Header */}
-        <header className="md:hidden sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-white/10 bg-white/80 dark:bg-slate-950/80 px-6 backdrop-blur-md">
+        <header className="md:hidden sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-white/10 bg-white/80 dark:bg-slate-950/80 px-6 backdrop-blur-md safe-area-inset-top">
           <div className="flex-1 flex items-center justify-center">
             <div className="flex items-center gap-2">
               <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
@@ -213,13 +232,16 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-auto">
-          <div className="container py-8 px-6 max-w-7xl mx-auto">{children}</div>
+          <div className="container py-6 md:py-8 px-4 md:px-6 max-w-7xl mx-auto">{children}</div>
         </main>
 
         {/* Mobile What's New Button */}
         <div className="md:hidden fixed bottom-4 right-4 z-40">
           <WhatsNew />
         </div>
+
+        {/* Version Badge */}
+        <div className="version-badge">v2.2</div>
       </div>
     </div>
   )

@@ -345,3 +345,20 @@ export class AIPlayer {
     return board.every((row) => row.every((cell) => cell !== ""))
   }
 }
+
+// Helper function to make an AI move (for compatibility with the previous implementation)
+export function makeAIMove(
+  board: string[][],
+  aiSymbol: string,
+  playerSymbol: string,
+  difficulty = "medium",
+): AIMove | null {
+  try {
+    const boardSize = board.length
+    const ai = new AIPlayer(difficulty as Difficulty, aiSymbol, playerSymbol, boardSize)
+    return ai.getMove(board)
+  } catch (error) {
+    console.error("Error making AI move:", error)
+    return null
+  }
+}

@@ -1,15 +1,12 @@
-"use client"
-
-import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
-import { Trophy, Target, Clock, Zap } from "lucide-react"
+import { Trophy, AlertCircle, Loader2, Clock } from "lucide-react"
 
 interface GameStatusProps {
   waitingForOpponent: boolean
   winner: { symbol: string; line: number[][] } | null
   isDraw: boolean
   isPlayerTurn: boolean
-  playerSymbol: string
+  playerSymbol?: string
   currentTurnPlayerName?: string
   winnerName?: string
 }
@@ -19,80 +16,50 @@ export function GameStatus({
   winner,
   isDraw,
   isPlayerTurn,
-  playerSymbol,
-  currentTurnPlayerName,
-  winnerName,
+  playerSymbol = "X",
+  currentTurnPlayerName = "Player",
+  winnerName = "Player",
 }: GameStatusProps) {
-  const [showWinAnimation, setShowWinAnimation] = useState(false)
-
-  useEffect(() => {
-    if (winner || isDraw) {
-      setShowWinAnimation(true)
-      const timer = setTimeout(() => setShowWinAnimation(false), 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [winner, isDraw])
-
-  let statusMessage = ""
-  let statusClass = "text-foreground"
-  let icon = null
-
   if (waitingForOpponent) {
-    statusMessage = "Waiting for an opponent to join..."
-    statusClass = "text-muted-foreground"
-    icon = <Clock className="w-6 h-6 animate-spin" />
-  } else if (winner) {
-    const isPlayerWinner = winner.symbol === playerSymbol
-    statusMessage = isPlayerWinner ? "🎉 Victory! You won the game! 🎉" : `${winnerName || "Opponent"} won the game!`
-    statusClass = isPlayerWinner ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
-    icon = <Trophy className={cn("w-6 h-6", isPlayerWinner && "animate-bounce text-yellow-500")} />
-  } else if (isDraw) {
-    statusMessage = "🤝 Game ended in a draw! 🤝"
-    statusClass = "text-amber-600 dark:text-amber-400"
-    icon = <Target className="w-6 h-6 text-amber-500" />
-  } else {
-    statusMessage = isPlayerTurn
-      ? "⚡ Your turn - Make your move!"
-      : `Waiting for ${currentTurnPlayerName || "opponent"} to make a move...`
-    statusClass = isPlayerTurn ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"
-    icon = isPlayerTurn ? (
-      <Zap className="w-6 h-6 text-blue-500 animate-pulse" />
-    ) : (
-      <Clock className="w-6 h-6 animate-slow-pulse" />
+    return (
+      <div className="flex items-center justify-center p-3 rounded-lg bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-800/50 text-amber-800 dark:text-amber-200">
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        <span className="font-medium">Waiting for opponent to join...</span>
+      </div>
+    )
+  }
+
+  if (winner) {
+    return (
+      <div className="flex items-center justify-center p-3 rounded-lg bg-green-100 dark:bg-green-900/50 border border-green-200 dark:border-green-800/50 text-green-800 dark:text-green-200">
+        <Trophy className="h-4 w-4 mr-2" />
+        <span className="font-medium">{winnerName || "Player"} wins!</span>
+      </div>
+    )
+  }
+
+  if (isDraw) {
+    return (
+      <div className="flex items-center justify-center p-3 rounded-lg bg-blue-100 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-800/50 text-blue-800 dark:text-blue-200">
+        <AlertCircle className="h-4 w-4 mr-2" />
+        <span className="font-medium">Game ended in a draw!</span>
+      </div>
     )
   }
 
   return (
-    <div className="text-center relative">
-      {/* Win celebration background */}
-      {showWinAnimation && (winner || isDraw) && (
-        <div className="absolute inset-0 -m-8 rounded-3xl bg-gradient-to-r from-yellow-400/20 via-pink-400/20 to-purple-400/20 animate-pulse"></div>
+    <div
+      className={cn(
+        "flex items-center justify-center p-3 rounded-lg border",
+        isPlayerTurn
+          ? "bg-blue-100 dark:bg-blue-900/50 border-blue-200 dark:border-blue-800/50 text-blue-800 dark:text-blue-200"
+          : "bg-purple-100 dark:bg-purple-900/50 border-purple-200 dark:border-purple-800/50 text-purple-800 dark:text-purple-200",
       )}
-
-      <div
-        className={cn(
-          "flex items-center justify-center gap-3 transition-all duration-500",
-          showWinAnimation && "scale-110",
-        )}
-      >
-        {icon}
-        <h2
-          className={cn(
-            "text-xl font-semibold transition-all duration-300",
-            statusClass,
-            showWinAnimation && winner && "animate-bounce",
-          )}
-        >
-          {statusMessage}
-        </h2>
-      </div>
-
-      {/* Subtitle for additional context */}
-      {!waitingForOpponent && !winner && !isDraw && (
-        <p className="text-sm text-muted-foreground mt-2 animate-fadeIn">
-          {isPlayerTurn ? "Click on any empty cell to place your symbol" : "Please wait for your opponent's move"}
-        </p>
-      )}
+    >
+      <Clock className={cn("h-4 w-4 mr-2", isPlayerTurn ? "animate-pulse" : "")} />
+      <span className="font-medium">
+        {isPlayerTurn ? "Your turn" : `${currentTurnPlayerName || "Opponent"}'s turn`}
+      </span>
     </div>
   )
 }

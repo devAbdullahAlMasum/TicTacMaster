@@ -1,0 +1,1 @@
+A crisp, clean clicking sound for UI interactions, like clicking a button or selecting an option. Something similar to a mouse click, but more stylized for a game.

@@ -116,6 +116,7 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
       name: playerName,
       avatarId,
       symbol: isHost ? "X" : "", // Let the addPlayer function assign the symbol
+      isReady: true,
     }
 
     const updatedState = addPlayer(roomCode, player)
@@ -129,6 +130,7 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
           name: `AI (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`,
           avatarId: 7, // Special AI avatar
           symbol: "O",
+          isReady: true,
         }
 
         const stateWithAI = addPlayer(roomCode, aiOpponent)
@@ -149,6 +151,7 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
           name: "Host Player",
           avatarId: Math.floor(Math.random() * 6) + 1,
           symbol: "X",
+          isReady: true,
         }
 
         const stateWithHost = addPlayer(roomCode, hostPlayer)
@@ -570,7 +573,7 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
                       <GameStatus
                         waitingForOpponent={waitingForOpponent}
                         winner={gameState.winner}
-                        isDraw={gameState.isDraw}
+                        isDraw={gameState.isDraw ?? false}
                         isPlayerTurn={isPlayerTurn}
                         playerSymbol={currentPlayer?.symbol || ""}
                         currentTurnPlayerName={currentTurnPlayer?.name}
@@ -593,11 +596,11 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
                               onClick={handleNextRound}
                               className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white border-none hover:shadow-md active:scale-95 transition-all"
                               disabled={
-                                eventWinner.winner !== null ||
-                                eventWinner.isDraw ||
-                                (gameState.currentRound &&
-                                  gameState.totalRounds &&
-                                  gameState.currentRound >= gameState.totalRounds)
+                                !!(eventWinner.winner !== null ||
+                                  eventWinner.isDraw ||
+                                  (gameState.currentRound &&
+                                    gameState.totalRounds &&
+                                    gameState.currentRound >= gameState.totalRounds))
                               }
                             >
                               <RotateCw className="mr-2 h-4 w-4" />
@@ -628,7 +631,6 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
                         isCurrentTurn={gameState.currentTurn === currentPlayer.symbol && !isAiThinking}
                         isWinner={gameState.winner?.symbol === currentPlayer.symbol}
                         isYou={true}
-                        team={currentPlayer.team}
                       />
                     )}
 
@@ -646,7 +648,6 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
                             }
                             isWinner={gameState.winner?.symbol === opponent.symbol}
                             isYou={false}
-                            team={opponent.team}
                           />
                         ))}
                       </div>

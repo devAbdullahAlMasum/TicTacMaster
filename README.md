@@ -14,45 +14,45 @@ A real-time multiplayer Tic-Tac-Toe game built with **Next.js**, supporting cust
 
 ---
 
+## ✨ What's New in v2.2
+
+*   **Multiple Game Modes**: Play against an AI, with a friend on the same device, or compete online.
+*   **Sound Effects & Haptics**: Immersive audio feedback for all interactions and game events, plus vibration on mobile.
+*   **Redesigned Dashboard**: A modern, visually appealing dashboard to access all game modes.
+*   **Persistent User Settings**: Your preferences for sound, vibration, and theme are saved locally.
+*   **"What's New" Changelog**: Stay updated with the latest features directly within the app.
+
+---
+
 ## 🚀 Features
 
-### 🎮 Core Gameplay
+### 🎮 Game Modes
 
-* Real-time two-player or three-player Tic-Tac-Toe
-* Custom board sizes: 3x3, 4x4, and 5x5
-* Detects win, draw, and player disconnect scenarios
-* Persistent game state across browser tabs
+*   **Single Player**: Challenge a smart AI opponent.
+*   **Local Multiplayer**: Play with a friend on the same device.
+*   **Online Multiplayer**: Create or join private game rooms to play with friends online.
+*   **Tournaments**: Create and join competitive events (coming soon).
 
-### 🧑‍🤝‍🧑 Multiplayer
+### 🔊 Sound & Haptics
 
-* Create or join a game room with a unique join code
-* Accurate synchronization between host and joining players
-* Room capacity limit based on player count settings
+*   Global click sounds for all buttons and navigation links.
+*   Distinct sound effects for moves, wins, draws, and errors.
+*   Mobile haptic feedback (vibration) for a more tactile experience.
+*   All sounds and vibrations can be toggled in the Settings menu.
 
-### 🧍 Player Profiles
+### 🧑‍🤝‍🧑 Multiplayer & Chat
 
-* Players enter their name and select an avatar before joining
-* Player names and avatars are shown during gameplay
+*   Create or join a game room with a unique join code.
+*   Live chat with a built-in profanity filter (host-controlled).
+*   Real-time synchronization of game state and player actions.
 
-### 💬 Chat System
+### 🎨 UI/UX & Customization
 
-* Live chat between players
-* Chat filter toggle to censor inappropriate words (host-controlled)
-* Message indicators for filtered messages
-* Tabs to filter messages: All, You, Others
-* Modern UI with timestamps and styled message bubbles
-
-### 🌗 Dark Mode
-
-* Full dark mode support using `next-themes`
-* Toggle available in the top-right corner of every page
-* Uses Tailwind's `zinc` palette for balanced gray/black tones
-
-### 🧭 Dashboard UI
-
-* Sidebar navigation for home, create room, and join room
-* Tabs and cards for clean layout management
-* Responsive layout optimized for mobile and desktop
+*   **Modern Dashboard**: A redesigned, intuitive dashboard serves as the central hub.
+*   **Player Profiles**: Choose a name and an avatar before playing.
+*   **Custom Board Sizes**: Play on 3x3, 4x4, or 5x5 boards.
+*   **Dark Mode**: A sleek, eye-friendly dark theme that can be toggled and is saved to your preferences.
+*   **Responsive Design**: Fully optimized for both desktop and mobile devices.
 
 ---
 
@@ -62,7 +62,8 @@ A real-time multiplayer Tic-Tac-Toe game built with **Next.js**, supporting cust
 * **React** + Hooks
 * **Tailwind CSS** (with custom theme)
 * **shadcn/ui** for elegant components
-* **localStorage** and `window.postMessage` for real-time sync
+* **localStorage** for persisting user settings and game state
+* **`useSoundEffects` Hook** for centralized audio and haptic feedback management
 
 ---
 
