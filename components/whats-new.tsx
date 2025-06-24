@@ -128,7 +128,7 @@ export function WhatsNew() {
 
                   <div className="flex justify-center gap-4 mt-3">
                     <a
-                      href="https://github.com/abdullahalmasum"
+                      href="https://github.com/devAbdullahAlMasum"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
@@ -137,7 +137,7 @@ export function WhatsNew() {
                       GitHub
                     </a>
                     <a
-                      href="https://instagram.com/abdullahalmasum"
+                      href="https://instagram.com/abdullah_al_masum_vt"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
