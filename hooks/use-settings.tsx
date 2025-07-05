@@ -18,6 +18,7 @@ type SettingsContextType = {
     playerName: string
     avatarId: number
     soundVolume: number
+    chatFilter?: boolean
     defaultPlayerName?: string
     defaultAvatarId?: number
   }
@@ -39,6 +40,7 @@ const defaultSettings: SettingsContextType["settings"] = {
   playerName: "Player",
   avatarId: 1,
   soundVolume: 1,
+  chatFilter: true,
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)

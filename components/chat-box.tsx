@@ -45,7 +45,7 @@ export function ChatBox({
 
   // Filter inappropriate words if enabled
   const filterMessage = (content: string) => {
-    if (!settings.chatFilter) return content
+    if (!settings?.chatFilter) return content
 
     // Simple filter for demonstration
     const inappropriateWords = ["damn", "hell", "crap", "stupid", "idiot"]

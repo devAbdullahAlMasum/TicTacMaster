@@ -28,7 +28,7 @@ export function AvatarSelector({ selectedAvatar, onSelectAvatar }: AvatarSelecto
             "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
             "hover:scale-110",
             selectedAvatar === id && "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-950",
-            settings.highContrast && "ring-offset-4",
+            settings.highContrastMode && "ring-offset-4",
           )}
           onClick={() => onSelectAvatar(id)}
           onMouseEnter={() => setHoveredAvatar(id)}

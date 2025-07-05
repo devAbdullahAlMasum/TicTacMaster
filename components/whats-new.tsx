@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -38,7 +38,7 @@ export function WhatsNew() {
         >
           <Sparkles className="h-4 w-4 mr-2" />
           What's New
-          <Badge className="ml-2 bg-blue-500 hover:bg-blue-600">v2.2</Badge>
+          <Badge className="ml-2 bg-blue-500 hover:bg-blue-600" variant="default">v2.2</Badge>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col p-0">
@@ -64,7 +64,7 @@ export function WhatsNew() {
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-bold flex items-center">
                     Version 2.2
-                    <Badge className="ml-2 bg-blue-500">Current</Badge>
+                    <Badge className="ml-2 bg-blue-500" variant="default">Current</Badge>
                   </h2>
                   <Button
                     variant="ghost"
