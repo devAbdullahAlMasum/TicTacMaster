@@ -15,6 +15,7 @@ import { ArrowRight, Bot, RotateCcw, Home, Trophy, Zap, Play, Sparkles } from "l
 import { useSettings } from "@/hooks/use-settings"
 import { useSoundEffects } from "@/lib/sound-manager"
 import { AIPlayer, type Difficulty } from "@/lib/ai-player"
+import { createEmptyBoard, checkWin, getGameState, getNextPlayer, isBoardFull } from "@/lib/game-logic"
 
 type Player = {
   id: string
@@ -60,90 +61,10 @@ export default function SinglePlayerPage() {
 
   const [aiThinking, setAiThinking] = useState(false)
 
-  // Check for win condition
-  const checkWin = (board: string[][], symbol: string, boardSize: number): number[][] | null => {
-    const winningLength = 3
-
-    // Check rows
-    for (let i = 0; i < boardSize; i++) {
-      for (let j = 0; j <= boardSize - winningLength; j++) {
-        let win = true
-        for (let k = 0; k < winningLength; k++) {
-          if (board[i][j + k] !== symbol) {
-            win = false
-            break
-          }
-        }
-        if (win) {
-          return Array(winningLength)
-            .fill(0)
-            .map((_, k) => [i, j + k])
-        }
-      }
-    }
-
-    // Check columns
-    for (let i = 0; i <= boardSize - winningLength; i++) {
-      for (let j = 0; j < boardSize; j++) {
-        let win = true
-        for (let k = 0; k < winningLength; k++) {
-          if (board[i + k][j] !== symbol) {
-            win = false
-            break
-          }
-        }
-        if (win) {
-          return Array(winningLength)
-            .fill(0)
-            .map((_, k) => [i + k, j])
-        }
-      }
-    }
-
-    // Check diagonals (top-left to bottom-right)
-    for (let i = 0; i <= boardSize - winningLength; i++) {
-      for (let j = 0; j <= boardSize - winningLength; j++) {
-        let win = true
-        for (let k = 0; k < winningLength; k++) {
-          if (board[i + k][j + k] !== symbol) {
-            win = false
-            break
-          }
-        }
-        if (win) {
-          return Array(winningLength)
-            .fill(0)
-            .map((_, k) => [i + k, j + k])
-        }
-      }
-    }
-
-    // Check diagonals (top-right to bottom-left)
-    for (let i = 0; i <= boardSize - winningLength; i++) {
-      for (let j = winningLength - 1; j < boardSize; j++) {
-        let win = true
-        for (let k = 0; k < winningLength; k++) {
-          if (board[i + k][j - k] !== symbol) {
-            win = false
-            break
-          }
-        }
-        if (win) {
-          return Array(winningLength)
-            .fill(0)
-            .map((_, k) => [i + k, j - k])
-        }
-      }
-    }
-
-    return null
-  }
-
-  // Initialize empty board
-  const createEmptyBoard = (size: number): string[][] => {
-    return Array(size)
-      .fill("")
-      .map(() => Array(size).fill(""))
+  // Helper function to convert our new format to the old format for compatibility
+  const convertWinResult = (result: ReturnType<typeof checkWin>): number[][] | null => {
+    if (!result) return null
+    return result.line.map(pos => [pos.row, pos.col])
   }
 
   // Start the game
@@ -245,8 +166,9 @@ export default function SinglePlayerPage() {
     playMoveSound()
 
     // Check for win
-    const winResult = checkWin(newBoard, gameState.currentTurn, gameState.boardSize)
-    const isDraw = !winResult && newBoard.every((row) => row.every((cell) => cell !== ""))
+    const winResult = checkWin(newBoard, 3)
+    const isDraw = !winResult && isBoardFull(newBoard)
+    const winLine = convertWinResult(winResult)
 
     const newScores = { ...gameState.scores }
     if (winResult) {
@@ -257,13 +179,13 @@ export default function SinglePlayerPage() {
     }
 
     // Determine next turn
-    const nextTurn = gameState.currentTurn === "X" ? "O" : "X"
+    const nextTurn = getNextPlayer(gameState.currentTurn)
 
     setGameState({
       ...gameState,
       board: newBoard,
       currentTurn: winResult || isDraw ? gameState.currentTurn : nextTurn,
-      winner: winResult ? { symbol: gameState.currentTurn, line: winResult } : null,
+      winner: winResult ? { symbol: gameState.currentTurn, line: winLine! } : null,
       isDraw,
       scores: newScores,
     })

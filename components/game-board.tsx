@@ -4,11 +4,12 @@ import { useState, useEffect, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import { useSoundEffects } from "@/lib/sound-manager"
 import { useSettings } from "@/hooks/use-settings"
+import { type GamePosition } from "@/lib/game-logic"
 
 interface GameBoardProps {
   board: string[][]
   onCellClick: (row: number, col: number) => void
-  winnerLine?: number[][]
+  winnerLine?: number[][] | GamePosition[]
   disabled?: boolean
 }
 
@@ -33,7 +34,18 @@ export function GameBoard({ board, onCellClick, winnerLine = [], disabled = fals
 
   const isCellInWinnerLine = useCallback(
     (row: number, col: number) => {
-      return winnerLine?.some(([r, c]) => r === row && c === col) || false
+      if (!winnerLine) return false
+      
+      // Handle both formats: number[][] and GamePosition[]
+      return winnerLine.some(position => {
+        if (Array.isArray(position)) {
+          // number[] format: [row, col]
+          return position[0] === row && position[1] === col
+        } else {
+          // GamePosition format: {row, col}
+          return position.row === row && position.col === col
+        }
+      })
     },
     [winnerLine],
   )
@@ -42,6 +54,10 @@ export function GameBoard({ board, onCellClick, winnerLine = [], disabled = fals
   const handleCellClick = (row: number, col: number) => {
     if (disabled || board[row][col] !== "") {
       playErrorSound()
+      // Add visual feedback for invalid moves
+      if (settings.vibrationEnabled && navigator.vibrate) {
+        navigator.vibrate([100, 50, 100])
+      }
       return
     }
 
