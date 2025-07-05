@@ -5,14 +5,18 @@ import { DashboardShell } from "@/components/dashboard-shell"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Bot, Users, Grid3X3, Trophy, Crown, ArrowRight } from "lucide-react"
+import { Bot, Users, Grid3X3, Trophy, Crown, ArrowRight, Home } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSoundEffects } from "@/lib/sound-manager"
+import { OnlineMultiplayerSetup } from "@/components/online-multiplayer-setup"
+import { TournamentSetup } from "@/components/tournament-setup"
+import { Toaster } from "@/components/ui/toaster"
 
 export default function HomePage() {
   const { playClickSound } = useSoundEffects()
   const [mounted, setMounted] = useState(false)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
+  const [currentMode, setCurrentMode] = useState<'home' | 'online' | 'tournament'>('home')
   const [settings, setSettings] = useState({
     largeText: false,
   })
@@ -51,7 +55,26 @@ export default function HomePage() {
     )
   }
 
+  // Render embedded setup screens
+  if (currentMode === 'online') {
+    return (
+      <DashboardShell>
+        <div className="w-full h-full flex flex-col justify-center items-center p-4 py-8">
+          <OnlineMultiplayerSetup onBack={() => setCurrentMode('home')} />
+        </div>
+      </DashboardShell>
+    )
+  }
 
+  if (currentMode === 'tournament') {
+    return (
+      <DashboardShell>
+        <div className="w-full h-full flex flex-col justify-center items-center p-4 py-8">
+          <TournamentSetup onBack={() => setCurrentMode('home')} />
+        </div>
+      </DashboardShell>
+    )
+  }
 
   return (
     <DashboardShell>
@@ -230,13 +253,29 @@ export default function HomePage() {
               <p className="text-muted-foreground">
                 Create or join online games and play with friends or random opponents from around the world.
               </p>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2 text-sm">
+                  <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
+                  <span>Create custom rooms</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
+                  <span>Real-time multiplayer</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <div className="h-1.5 w-1.5 rounded-full bg-purple-500"></div>
+                  <span>Chat with opponents</span>
+                </li>
+              </ul>
               <div className="flex gap-3">
                 <Button
-                  asChild
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 touch-manipulation" onClick={playClickSound}
-                  
+                  onClick={() => {
+                    playClickSound()
+                    setCurrentMode('online')
+                  }}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 touch-manipulation"
                 >
-                  <Link href="/create-room">Create Game</Link>
+                  Create Game
                 </Button>
                 <Button asChild variant="outline" className="flex-1 touch-manipulation" onClick={playClickSound} >
                   <Link href="/join-room">Join Game</Link>
@@ -257,13 +296,29 @@ export default function HomePage() {
               <p className="text-muted-foreground">
                 Create or join tournaments with multiple players and compete for the top spot on the leaderboard.
               </p>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2 text-sm">
+                  <div className="h-1.5 w-1.5 rounded-full bg-amber-500"></div>
+                  <span>Multi-round competitions</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <div className="h-1.5 w-1.5 rounded-full bg-amber-500"></div>
+                  <span>Customizable rules</span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <div className="h-1.5 w-1.5 rounded-full bg-amber-500"></div>
+                  <span>Tournament statistics</span>
+                </li>
+              </ul>
               <div className="flex gap-3">
                 <Button
-                  asChild
-                  className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 touch-manipulation" onClick={playClickSound}
-                  
+                  onClick={() => {
+                    playClickSound()
+                    setCurrentMode('tournament')
+                  }}
+                  className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 touch-manipulation"
                 >
-                  <Link href="/create-event">Create Tournament</Link>
+                  Create Tournament
                 </Button>
                 <Button asChild variant="outline" className="flex-1 touch-manipulation" onClick={playClickSound} >
                   <Link href="/leaderboard">
@@ -276,6 +331,7 @@ export default function HomePage() {
           </Card>
         </div>
       </div>
+      <Toaster />
     </DashboardShell>
   )
 }
