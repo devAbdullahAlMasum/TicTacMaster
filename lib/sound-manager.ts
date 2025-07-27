@@ -104,6 +104,19 @@ export function useSoundEffects() {
     }
   }
 
+  const playSuccessSound = () => {
+    if (settings?.soundEnabled) {
+      playSound("/sounds/success.mp3", settings.soundVolume ?? 1)
+    }
+    if (settings?.vibrationEnabled && typeof navigator !== "undefined" && "vibrate" in navigator) {
+      try {
+        navigator.vibrate([20, 10, 20])
+      } catch (e) {
+        // Ignore vibration errors
+      }
+    }
+  }
+
   return {
     playMoveSound,
     playWinSound,
@@ -111,5 +124,6 @@ export function useSoundEffects() {
     playErrorSound,
     playNotificationSound,
     playClickSound,
+    playSuccessSound,
   }
 }
