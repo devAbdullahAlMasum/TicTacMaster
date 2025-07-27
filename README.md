@@ -1,6 +1,6 @@
 # Multiplayer Tic-Tac-Toe Game
 
-A real-time multiplayer Tic-Tac-Toe game built with **Next.js**, supporting custom game rooms, live chat, multiple board sizes, dark mode, and more.
+A real-time multiplayer Tic-Tac-Toe game built with **Next.js**, supporting custom game rooms, live chat, multiple board sizes, dark mode, and a comprehensive JSON-based theme system.
 
 ## 🧑‍💻 Author
 
@@ -11,6 +11,26 @@ A real-time multiplayer Tic-Tac-Toe game built with **Next.js**, supporting cust
 ## 🚀 Hosted Version
 
 🔗 [tic-tac-master-gray.vercel.app](https://tic-tac-master-gray.vercel.app)
+
+---
+
+## 🎨 Theme System (v2.3)
+
+**NEW**: Comprehensive JSON-based theme system with 5 built-in themes:
+
+*   **Light** - Clean, bright theme with blue accents
+*   **Dark** - Modern dark theme with blue accents
+*   **Ocean** - Cyan and blue ocean-inspired theme
+*   **Forest** - Green and emerald nature-inspired theme
+*   **Sunset** - Orange and red warm theme
+
+### Features
+- **Dynamic Theme Switching**: Change themes instantly without page reload
+- **JSON Configuration**: Easy theme creation and customization
+- **Enhanced Components**: All UI components are theme-aware
+- **Component Integration**: Seamless integration with existing components
+
+For detailed documentation, see [THEME_SYSTEM.md](./THEME_SYSTEM.md).
 
 ---
 

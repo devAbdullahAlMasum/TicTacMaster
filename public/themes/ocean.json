@@ -1,0 +1,120 @@
+{
+  "name": "Ocean",
+  "type": "light",
+  "colors": {
+    "primary": {
+      "50": "#ecfeff",
+      "100": "#cffafe",
+      "200": "#a5f3fc",
+      "300": "#67e8f9",
+      "400": "#22d3ee",
+      "500": "#06b6d4",
+      "600": "#0891b2",
+      "700": "#0e7490",
+      "800": "#155e75",
+      "900": "#164e63",
+      "950": "#083344"
+    },
+    "secondary": {
+      "50": "#f0f9ff",
+      "100": "#e0f2fe",
+      "200": "#bae6fd",
+      "300": "#7dd3fc",
+      "400": "#38bdf8",
+      "500": "#0ea5e9",
+      "600": "#0284c7",
+      "700": "#0369a1",
+      "800": "#075985",
+      "900": "#0c4a6e",
+      "950": "#082f49"
+    },
+    "accent": {
+      "50": "#f0fdfa",
+      "100": "#ccfbf1",
+      "200": "#99f6e4",
+      "300": "#5eead4",
+      "400": "#2dd4bf",
+      "500": "#14b8a6",
+      "600": "#0d9488",
+      "700": "#0f766e",
+      "800": "#115e59",
+      "900": "#134e4a",
+      "950": "#042f2e"
+    }
+  },
+  "components": {
+    "background": {
+      "primary": "bg-white",
+      "secondary": "bg-cyan-50",
+      "tertiary": "bg-blue-50",
+      "gradient": "bg-gradient-to-br from-cyan-50 to-blue-100"
+    },
+    "text": {
+      "primary": "text-slate-900",
+      "secondary": "text-slate-700",
+      "tertiary": "text-slate-600",
+      "accent": "text-cyan-600",
+      "muted": "text-slate-500"
+    },
+    "border": {
+      "primary": "border-cyan-200",
+      "secondary": "border-blue-200",
+      "accent": "border-cyan-300",
+      "focus": "border-cyan-500"
+    },
+    "button": {
+      "primary": {
+        "base": "bg-cyan-600 text-white border-cyan-600",
+        "hover": "hover:bg-cyan-700 hover:border-cyan-700",
+        "active": "active:bg-cyan-800",
+        "disabled": "disabled:bg-gray-300 disabled:text-gray-500"
+      },
+      "secondary": {
+        "base": "bg-white text-cyan-700 border-cyan-300",
+        "hover": "hover:bg-cyan-50 hover:border-cyan-400",
+        "active": "active:bg-cyan-100",
+        "disabled": "disabled:bg-gray-100 disabled:text-gray-400"
+      },
+      "ghost": {
+        "base": "bg-transparent text-cyan-700",
+        "hover": "hover:bg-cyan-100",
+        "active": "active:bg-cyan-200"
+      }
+    },
+    "card": {
+      "base": "bg-white border-cyan-200 shadow-sm",
+      "hover": "hover:shadow-lg hover:border-cyan-300",
+      "focus": "focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+    },
+    "input": {
+      "base": "bg-white border-cyan-300 text-slate-900 placeholder-slate-500",
+      "focus": "focus:border-cyan-500 focus:ring-cyan-500",
+      "error": "border-red-300 focus:border-red-500 focus:ring-red-500"
+    },
+    "sidebar": {
+      "background": "bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-700",
+      "text": "text-white",
+      "accent": "bg-white/10",
+      "hover": "hover:bg-white/20"
+    },
+    "gameBoard": {
+      "cell": {
+        "base": "bg-gradient-to-br from-white/90 to-cyan-50/90 border-cyan-200/50",
+        "hover": "hover:bg-gradient-to-br hover:from-cyan-50/90 hover:to-blue-50/90 hover:border-cyan-300/50",
+        "winner": "bg-gradient-to-br from-teal-100 to-teal-200 border-teal-400/70",
+        "disabled": "opacity-60 cursor-not-allowed"
+      },
+      "symbol": {
+        "x": "text-cyan-600",
+        "o": "text-blue-600"
+      }
+    }
+  },
+  "animations": {
+    "transition": "transition-all duration-300 ease-in-out",
+    "hover": "transform hover:scale-105",
+    "pulse": "animate-pulse",
+    "bounce": "animate-bounce",
+    "fade": "animate-fade-in"
+  }
+}
