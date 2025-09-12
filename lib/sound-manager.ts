@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useSettings } from "@/hooks/use-settings"
 
 // Helper function to play a sound
@@ -18,13 +17,8 @@ const playSound = (soundFile: string, volume: number) => {
 // Hook for using sound effects
 export function useSoundEffects() {
   const { settings } = useSettings()
-  const [isInitialized, setIsInitialized] = useState(false)
-
-  // Initialize sounds on first render
-  useEffect(() => {
-    setIsInitialized(true)
-  }, [])
-
+  
+  
   const playMoveSound = () => {
     if (settings?.soundEnabled) {
       playSound("/sounds/move.mp3", settings.soundVolume ?? 1)
@@ -92,8 +86,7 @@ export function useSoundEffects() {
 
   const playClickSound = () => {
     if (settings?.soundEnabled) {
-        // NOTE: click.mp3 is missing from /public/sounds
-        playSound("/sounds/click.mp3", settings.soundVolume ?? 1)
+      playSound("/sounds/click.mp3", settings.soundVolume ?? 1)
     }
     if (settings?.vibrationEnabled && typeof navigator !== "undefined" && "vibrate" in navigator) {
       try {

@@ -77,8 +77,8 @@ export default function HomePage() {
                   <Button
                     asChild
                     size="lg"
-                    className="bg-white text-blue-600 hover:bg-blue-50 hover:text-blue-700 touch-manipulation" onClick={playClickSound}
-                    
+                    className="bg-white text-blue-600 hover:bg-blue-50 hover:text-blue-700 touch-manipulation"
+                    onClick={playClickSound}
                   >
                     <Link href="/single-player">
                       <Bot className="mr-2 h-5 w-5" />
@@ -89,8 +89,8 @@ export default function HomePage() {
                     asChild
                     variant="outline"
                     size="lg"
-                    className="bg-transparent border-white text-white hover:bg-white/20 touch-manipulation" onClick={playClickSound}
-                    
+                    className="bg-transparent border-white text-white hover:bg-white/20 touch-manipulation"
+                    onClick={playClickSound}
                   >
                     <Link href="/local-multiplayer">
                       <Users className="mr-2 h-5 w-5" />
@@ -165,8 +165,8 @@ export default function HomePage() {
               </ul>
               <Button
                 asChild
-                className="w-full bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 touch-manipulation" onClick={playClickSound}
-                
+                className="w-full bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 touch-manipulation"
+                onClick={playClickSound}
               >
                 <Link href="/single-player">
                   Play Now
@@ -204,8 +204,8 @@ export default function HomePage() {
               </ul>
               <Button
                 asChild
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 touch-manipulation" onClick={playClickSound}
-                
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 touch-manipulation"
+                onClick={playClickSound}
               >
                 <Link href="/local-multiplayer">
                   Play Now
@@ -233,12 +233,17 @@ export default function HomePage() {
               <div className="flex gap-3">
                 <Button
                   asChild
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 touch-manipulation" onClick={playClickSound}
-                  
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 touch-manipulation"
+                  onClick={playClickSound}
                 >
                   <Link href="/create-room">Create Game</Link>
                 </Button>
-                <Button asChild variant="outline" className="flex-1 touch-manipulation" onClick={playClickSound} >
+                <Button
+                  asChild
+                  variant="outline"
+                  className="flex-1 touch-manipulation"
+                  onClick={playClickSound}
+                >
                   <Link href="/join-room">Join Game</Link>
                 </Button>
               </div>
@@ -260,12 +265,17 @@ export default function HomePage() {
               <div className="flex gap-3">
                 <Button
                   asChild
-                  className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 touch-manipulation" onClick={playClickSound}
-                  
+                  className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 touch-manipulation"
+                  onClick={playClickSound}
                 >
                   <Link href="/create-event">Create Tournament</Link>
                 </Button>
-                <Button asChild variant="outline" className="flex-1 touch-manipulation" onClick={playClickSound} >
+                <Button
+                  asChild
+                  variant="outline"
+                  className="flex-1 touch-manipulation"
+                  onClick={playClickSound}
+                >
                   <Link href="/leaderboard">
                     <Crown className="mr-2 h-4 w-4" />
                     Leaderboard

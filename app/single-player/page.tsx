@@ -15,6 +15,7 @@ import { ArrowRight, Bot, RotateCcw, Home, Trophy, Zap, Play, Sparkles } from "l
 import { useSettings } from "@/hooks/use-settings"
 import { useSoundEffects } from "@/lib/sound-manager"
 import { AIPlayer, type Difficulty } from "@/lib/ai-player"
+import { useRouter } from "next/navigation"
 
 type Player = {
   id: string
@@ -36,6 +37,7 @@ type GameState = {
 }
 
 export default function SinglePlayerPage() {
+  const router = useRouter()
   const { settings } = useSettings()
   const { playMoveSound, playWinSound, playDrawSound } = useSoundEffects()
 
@@ -199,8 +201,8 @@ export default function SinglePlayerPage() {
       !gameState.isDraw &&
       gameState.players.find((p) => p.symbol === gameState.currentTurn)?.isAI
     ) {
-      const aiPlayer = gameState.players.find((p) => p.isAI)
-      if (!aiPlayer) return
+      const aiPlayerData = gameState.players.find((p) => p.isAI)
+      if (!aiPlayerData) return
 
       setAiThinking(true)
 
@@ -209,7 +211,7 @@ export default function SinglePlayerPage() {
         try {
           const ai = new AIPlayer(
             setupData.difficulty as Difficulty,
-            aiPlayer.symbol,
+            aiPlayerData.symbol,
             gameState.players.find((p) => !p.isAI)?.symbol || "X",
             gameState.boardSize,
           )
@@ -228,7 +230,7 @@ export default function SinglePlayerPage() {
 
       return () => clearTimeout(timer)
     }
-  }, [gameState.currentTurn, gameState.gameStarted, gameState.winner, gameState.isDraw])
+  }, [gameState.currentTurn, gameState.gameStarted, gameState.winner, gameState.isDraw, setupData.difficulty, gameState.players, gameState.boardSize])
 
   // Make a move
   const makeMove = (row: number, col: number) => {
@@ -292,6 +294,11 @@ export default function SinglePlayerPage() {
       gameStarted: false,
       scores: {},
     })
+  }
+
+  // Go back to home
+  const goHome = () => {
+    router.push("/")
   }
 
   const currentPlayer = gameState.players.find((p) => p.symbol === gameState.currentTurn)
@@ -475,10 +482,15 @@ export default function SinglePlayerPage() {
               <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 text-transparent bg-clip-text">
                 Single Player Game
               </h1>
-              <Button variant="outline" onClick={backToSetup} size="sm" className="touch-manipulation">
-                <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                Setup
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={goHome} size="sm" className="touch-manipulation">
+                  <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  Home
+                </Button>
+                <Button variant="outline" onClick={backToSetup} size="sm" className="touch-manipulation">
+                  Setup
+                </Button>
+              </div>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground">
               {gameState.boardSize}×{gameState.boardSize} board • {setupData.difficulty} difficulty

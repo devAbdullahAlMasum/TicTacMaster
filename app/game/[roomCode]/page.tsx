@@ -20,6 +20,7 @@ import {
   addChatMessage,
   advanceToNextRound,
   checkEventWinner,
+  saveGameState,
   type ChatMessage,
 } from "@/lib/game-store"
 import { AIPlayer, type Difficulty } from "@/lib/ai-player"
@@ -78,7 +79,14 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
   })
 
   // Event details (if applicable)
-  const [eventDetails, setEventDetails] = useState<any>(null)
+  const [eventDetails, setEventDetails] = useState<{
+    eventName: string
+    rounds: number
+    timeLimit: string
+    scoreToWin: number
+    createdBy: string
+    createdAt: number
+  } | null>(null)
 
   // Load event details if this is an event
   useEffect(() => {
@@ -368,7 +376,19 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
   const scoreToWin = gameState.totalRounds ? Math.ceil(Number(gameState.totalRounds) / 2) : 1
 
   // Determine the theme color based on the game type
-  const getThemeColor = () => {
+  const getThemeColor = (): {
+    light: {
+      from: string
+      to: string
+      border: string
+      darkFrom: string
+      darkTo: string
+      darkBorder: string
+      gradientText: string
+      iconBg: string
+      text: string
+    }
+  } => {
     if (isSinglePlayer) {
       return {
         light: {
@@ -808,22 +828,3 @@ export default function GamePage({ params }: { params: { roomCode: string } }) {
   )
 }
 
-// Helper function to save game state
-function saveGameState(roomCode: string, state: any) {
-  try {
-    // Add timestamp to track updates
-    state.lastUpdated = Date.now()
-
-    // Save to localStorage
-    localStorage.setItem(`game-${roomCode}`, JSON.stringify(state))
-
-    // Dispatch event for other tabs/windows
-    window.dispatchEvent(
-      new CustomEvent("game-state-update", {
-        detail: { roomCode, state },
-      }),
-    )
-  } catch (error) {
-    console.error("Error saving game state:", error)
-  }
-}
