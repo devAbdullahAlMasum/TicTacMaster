@@ -1,35 +1,41 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
-import { SettingsProvider } from "@/hooks/use-settings"
-import { GlobalSoundProvider } from "@/components/global-sound-provider"
+import type React from "react";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
+import { SettingsProvider } from "@/hooks/use-settings";
+import { GlobalSoundProvider } from "@/components/global-sound-provider";
+import { ClerkProvider } from "@clerk/nextjs";
+import ConvexClientProvider from "@/components/convex-client-provider";
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "TicTacMaster",
   description: "The ultimate Tic Tac Toe experience",
-    generator: 'v0.dev'
-}
+  generator: "v0.dev",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <SettingsProvider>
-            <GlobalSoundProvider>{children}</GlobalSoundProvider>
-            <Toaster />
-          </SettingsProvider>
-        </ThemeProvider>
+        <ClerkProvider>
+          <ConvexClientProvider>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <SettingsProvider>
+                <GlobalSoundProvider>{children}</GlobalSoundProvider>
+                <Toaster />
+              </SettingsProvider>
+            </ThemeProvider>
+          </ConvexClientProvider>
+        </ClerkProvider>
       </body>
     </html>
-  )
+  );
 }
