@@ -1,39 +1,57 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { usePathname } from "next/navigation"
-import Link from "next/link"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { Grid3X3, Home, Settings, Users, Menu, Trophy, Crown, Bot, UserCheck, X } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Badge } from "@/components/ui/badge"
-import { WhatsNew } from "@/components/whats-new"
-import { useSettings } from "@/hooks/use-settings"
-import { useSoundEffects } from "@/lib/sound-manager"
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import {
+  Grid3X3,
+  Home,
+  Settings,
+  Users,
+  Menu,
+  Trophy,
+  Crown,
+  Bot,
+  UserCheck,
+  X,
+  User,
+} from "lucide-react";
+import { UserAvatar } from "@/components/user-avatar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
+import { WhatsNew } from "@/components/whats-new";
+import { useSettings } from "@/hooks/use-settings";
+import { useSoundEffects } from "@/lib/sound-manager";
+import { useUser } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 interface DashboardShellProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function DashboardShell({ children }: DashboardShellProps) {
-  const pathname = usePathname()
-  const [isMounted, setIsMounted] = useState(false)
-  const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const { settings } = useSettings()
-  const { playClickSound } = useSoundEffects()
+  const pathname = usePathname();
+  const [isMounted, setIsMounted] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { settings } = useSettings();
+  const { playClickSound } = useSoundEffects();
+  const { user } = useUser();
+  const currentUser = useQuery(api.users.getCurrentUser);
+  const userStats = useQuery(api.leaderboard.getCurrentUserStats);
 
   // Prevent hydration mismatch
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    setIsMounted(true);
+  }, []);
 
   if (!isMounted) {
-    return null
+    return null;
   }
 
   const navigationItems = [
@@ -42,6 +60,12 @@ export function DashboardShell({ children }: DashboardShellProps) {
       href: "/",
       icon: Home,
       description: "Overview and quick actions",
+    },
+    {
+      name: "Profile",
+      href: "/profile",
+      icon: User,
+      description: "View your stats and achievements",
     },
     {
       name: "Single Player",
@@ -89,89 +113,115 @@ export function DashboardShell({ children }: DashboardShellProps) {
       description: "View global rankings",
       badge: "SOON",
     },
-  ]
+  ];
 
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      {/* User Profile - Compact */}
-      <div className="p-4">
-        <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10 p-3">
-          <div className="absolute -top-4 -right-4 h-12 w-12 rounded-full bg-blue-400/20 blur-xl"></div>
-          <div className="absolute -bottom-4 -left-4 h-12 w-12 rounded-full bg-indigo-400/20 blur-xl"></div>
-          <div className="relative flex items-center gap-3">
-            <Avatar className="h-10 w-10 border-2 border-white/20 shadow-lg">
-              <AvatarImage src="/avatars/avatar-1.png" alt="User" />
-              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-sm">
-                TM
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-medium text-white text-sm">Welcome!</p>
-              <p className="text-xs text-blue-100">Ready to play?</p>
-            </div>
-          </div>
-        </div>
-      </div>
+  const SidebarContent = () => {
+    const avatarId = currentUser?.avatarId || 1;
+    const username = currentUser?.username || user?.username || "Player";
+    const wins = userStats?.wins || 0;
+    const losses = userStats?.losses || 0;
 
-      {/* Navigation - Compact */}
-      <nav className="flex-1 px-4 min-h-0 overflow-y-auto custom-scrollbar">
-        <div className="space-y-1">
-          {navigationItems.map((item) => (
+    return (
+      <div className="flex flex-col h-full">
+        {/* User Profile - Compact */}
+        {user && (
+          <div className="p-4">
             <Link
-              key={item.href}
-              href={item.href}
+              href="/profile"
               onClick={() => {
                 playClickSound();
                 setIsMobileOpen(false);
               }}
-              className={cn(
-                "group relative overflow-hidden rounded-lg p-3 transition-all duration-200 block",
-                pathname === item.href
-                  ? "bg-gradient-to-r from-white/20 to-white/10 text-white shadow-lg"
-                  : "text-blue-100 hover:bg-white/10 hover:text-white",
-              )}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative flex items-center gap-3">
-                <div
-                  className={cn(
-                    "flex items-center justify-center h-8 w-8 rounded-lg transition-colors flex-shrink-0",
-                    pathname === item.href
-                      ? "bg-white/20 text-white"
-                      : "bg-white/10 text-blue-200 group-hover:bg-white/20 group-hover:text-white",
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm truncate">{item.name}</span>
-                    {item.badge && (
-                      <Badge className="text-xs bg-white/20 text-white border-white/20 px-1.5 py-0.5 h-5 flex-shrink-0">
-                        {item.badge}
-                      </Badge>
-                    )}
+              <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10 p-3 cursor-pointer hover:bg-white/15 transition-all">
+                <div className="absolute -top-4 -right-4 h-12 w-12 rounded-full bg-blue-400/20 blur-xl"></div>
+                <div className="absolute -bottom-4 -left-4 h-12 w-12 rounded-full bg-indigo-400/20 blur-xl"></div>
+                <div className="relative flex items-center gap-3">
+                  <UserAvatar
+                    avatarId={avatarId}
+                    username={username}
+                    size="md"
+                    className="border-2 border-white/20 shadow-lg"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-white text-sm truncate">
+                      @{username}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-green-300">{wins}W</span>
+                      <span className="text-xs text-red-300">{losses}L</span>
+                    </div>
                   </div>
-                  <p className="text-xs opacity-80 mt-0.5 truncate">{item.description}</p>
                 </div>
               </div>
             </Link>
-          ))}
-        </div>
-      </nav>
+          </div>
+        )}
 
-      {/* Footer - Compact */}
-      <div className="p-4 border-t border-white/10 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-blue-100">Theme</span>
-          <ThemeToggle />
-        </div>
-        <div className="w-full">
-          <WhatsNew />
+        {/* Navigation - Compact */}
+        <nav className="flex-1 px-4 min-h-0 overflow-y-auto custom-scrollbar">
+          <div className="space-y-1">
+            {navigationItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => {
+                  playClickSound();
+                  setIsMobileOpen(false);
+                }}
+                className={cn(
+                  "group relative overflow-hidden rounded-lg p-3 transition-all duration-200 block",
+                  pathname === item.href
+                    ? "bg-gradient-to-r from-white/20 to-white/10 text-white shadow-lg"
+                    : "text-blue-100 hover:bg-white/10 hover:text-white",
+                )}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="relative flex items-center gap-3">
+                  <div
+                    className={cn(
+                      "flex items-center justify-center h-8 w-8 rounded-lg transition-colors flex-shrink-0",
+                      pathname === item.href
+                        ? "bg-white/20 text-white"
+                        : "bg-white/10 text-blue-200 group-hover:bg-white/20 group-hover:text-white",
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm truncate">
+                        {item.name}
+                      </span>
+                      {item.badge && (
+                        <Badge className="text-xs bg-white/20 text-white border-white/20 px-1.5 py-0.5 h-5 flex-shrink-0">
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs opacity-80 mt-0.5 truncate">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </nav>
+
+        {/* Footer - Compact */}
+        <div className="p-4 border-t border-white/10 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-blue-100">Theme</span>
+            <ThemeToggle />
+          </div>
+          <div className="w-full">
+            <WhatsNew />
+          </div>
         </div>
       </div>
-    </div>
-  )
+    );
+  };
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950">
@@ -203,7 +253,10 @@ export function DashboardShell({ children }: DashboardShellProps) {
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 rounded-full bg-white/10 text-white hover:bg-white/20"
-                onClick={() => { playClickSound(); setIsMobileOpen(false); }}
+                onClick={() => {
+                  playClickSound();
+                  setIsMobileOpen(false);
+                }}
               >
                 <X className="h-4 w-4" />
                 <span className="sr-only">Close</span>
@@ -232,7 +285,9 @@ export function DashboardShell({ children }: DashboardShellProps) {
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-auto">
-          <div className="container py-6 md:py-8 px-4 md:px-6 max-w-7xl mx-auto">{children}</div>
+          <div className="container py-6 md:py-8 px-4 md:px-6 max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
 
         {/* Mobile What's New Button */}
@@ -244,5 +299,5 @@ export function DashboardShell({ children }: DashboardShellProps) {
         <div className="version-badge">v2.2</div>
       </div>
     </div>
-  )
+  );
 }

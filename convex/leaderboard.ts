@@ -223,3 +223,16 @@ export const searchLeaderboard = query({
     return matchingPlayers;
   },
 });
+
+// Get user stats by userId
+export const getUserStats = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const stats = await ctx.db
+      .query("leaderboard")
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
+      .unique();
+
+    return stats;
+  },
+});

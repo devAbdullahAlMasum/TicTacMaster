@@ -1,38 +1,60 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { DashboardShell } from "@/components/dashboard-shell";
 import { GameBoard } from "@/components/game-board";
-import { PlayerInfo } from "@/components/player-info";
-import { GameStatus } from "@/components/game-status";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/user-avatar";
+import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Copy,
   Home,
   RotateCw,
   Loader2,
-  Users,
+  Send,
+  Trophy,
+  Target,
+  Zap,
+  Award,
+  Crown,
   MessageSquare,
+  Users,
+  Clock,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "@/components/ui/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { SignInButton } from "@clerk/nextjs";
-import { Id } from "../../../convex/_generated/dataModel";
+import { useSoundEffects } from "@/lib/sound-manager";
+import { cn } from "@/lib/utils";
 
 export default function GamePage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const roomCode = params.roomCode as string;
+  const { playClickSound } = useSoundEffects();
 
-  const [activeTab, setActiveTab] = useState("game");
   const [isCopied, setIsCopied] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [playerCardOpen, setPlayerCardOpen] = useState(false);
 
   // Convex queries and mutations
   const game = useQuery(
@@ -49,19 +71,25 @@ export default function GamePage() {
   );
   const sendMessageMutation = useMutation(api.chat.sendMessage);
 
-  const [chatInput, setChatInput] = useState("");
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  // Get player stats for card
+  const selectedPlayerStats = useQuery(
+    api.leaderboard.getUserStats,
+    selectedPlayerId ? { userId: selectedPlayerId } : "skip",
+  );
 
   // Check if current user is a player
   const currentPlayer = game?.players.find(
     (p) => p.userId === currentUser?.clerkId,
   );
   const isMyTurn = game?.currentPlayer === currentUser?.clerkId;
+  const isGameActive = game?.status === "active";
+  const isGameCompleted = game?.status === "completed";
 
   // Copy room code to clipboard
   const handleCopyRoomCode = () => {
     navigator.clipboard.writeText(roomCode);
     setIsCopied(true);
+    playClickSound();
     toast({
       title: "Room code copied!",
       description: "Share this code with your friends to join the game.",
@@ -71,34 +99,17 @@ export default function GamePage() {
 
   // Make a move
   const handleMove = async (position: number) => {
-    console.log("handleMove called", {
-      position,
-      hasGame: !!game,
-      hasCurrentPlayer: !!currentPlayer,
-      isMyTurn,
-      currentPlayerUserId: game?.currentPlayer,
-      myUserId: currentUser?.clerkId,
-      gameStatus: game?.status,
-    });
-
-    if (!game || !currentPlayer || !isMyTurn) {
-      console.log("Move blocked:", {
-        noGame: !game,
-        noCurrentPlayer: !currentPlayer,
-        notMyTurn: !isMyTurn,
-      });
+    if (!game || !currentPlayer || !isMyTurn || !isGameActive) {
       return;
     }
 
     try {
-      console.log("Making move...");
+      playClickSound();
       await makeMoveMutation({
         gameId: game._id,
         position,
       });
-      console.log("Move successful");
     } catch (error: any) {
-      console.error("Move error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to make move",
@@ -112,6 +123,7 @@ export default function GamePage() {
     if (!game) return;
 
     try {
+      playClickSound();
       await leaveGameMutation({ gameId: game._id });
       toast({
         title: "Left game",
@@ -132,12 +144,12 @@ export default function GamePage() {
     if (!game) return;
 
     try {
-      const newGameId = await rematchMutation({ gameId: game._id });
+      playClickSound();
+      await rematchMutation({ gameId: game._id });
       toast({
         title: "Rematch created!",
         description: "Starting a new game...",
       });
-      // Stay on same room code page, it will update automatically
     } catch (error: any) {
       toast({
         title: "Error",
@@ -153,6 +165,7 @@ export default function GamePage() {
 
     setIsSendingMessage(true);
     try {
+      playClickSound();
       await sendMessageMutation({
         gameId: game._id,
         message: chatInput.trim(),
@@ -169,39 +182,68 @@ export default function GamePage() {
     }
   };
 
+  // Open player card
+  const handlePlayerClick = (playerId: string) => {
+    setSelectedPlayerId(playerId);
+    setPlayerCardOpen(true);
+    playClickSound();
+  };
+
+  // Get winner info
+  const getWinnerInfo = () => {
+    if (!game || !game.winner) return null;
+
+    if (game.winner === "draw") {
+      return { text: "It's a Draw!", color: "text-yellow-500" };
+    }
+
+    const winner = game.players.find((p) => p.userId === game.winner);
+    if (!winner) return null;
+
+    const isCurrentUserWinner = game.winner === currentUser?.clerkId;
+    return {
+      text: isCurrentUserWinner ? "You Won! 🎉" : `${winner.name} Wins!`,
+      color: isCurrentUserWinner ? "text-green-500" : "text-blue-500",
+    };
+  };
+
   // Loading state
   if (game === undefined) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading game...</p>
+      <DashboardShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-500" />
+            <p className="text-muted-foreground">Loading game...</p>
+          </div>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   // Game not found
   if (game === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>Game not found</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              This game room doesn't exist or has been deleted.
-            </p>
-            <Link href="/">
-              <Button className="w-full">
-                <Home className="mr-2 h-4 w-4" />
-                Go Home
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      <DashboardShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Card className="max-w-md">
+            <CardHeader>
+              <CardTitle>Game not found</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                This game room doesn't exist or has been deleted.
+              </p>
+              <Link href="/">
+                <Button className="w-full" onClick={playClickSound}>
+                  <Home className="mr-2 h-4 w-4" />
+                  Go Home
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardShell>
     );
   }
 
@@ -209,267 +251,365 @@ export default function GamePage() {
   return (
     <>
       <Unauthenticated>
-        <div className="min-h-screen flex items-center justify-center">
-          <Card className="max-w-md">
-            <CardHeader>
-              <CardTitle>Sign in required</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                You need to be signed in to play this game.
-              </p>
-              <SignInButton mode="modal">
-                <Button className="w-full">Sign In</Button>
-              </SignInButton>
-            </CardContent>
-          </Card>
-        </div>
+        <DashboardShell>
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <Card className="max-w-md">
+              <CardHeader>
+                <CardTitle>Sign in required</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">
+                  You need to be signed in to play this game.
+                </p>
+                <SignInButton mode="modal">
+                  <Button className="w-full">Sign In</Button>
+                </SignInButton>
+              </CardContent>
+            </Card>
+          </div>
+        </DashboardShell>
       </Unauthenticated>
 
       <Authenticated>
-        <div className="container mx-auto p-4 max-w-7xl">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold">Game Room</h1>
-                <Badge
-                  variant={
-                    game.status === "active"
-                      ? "default"
-                      : game.status === "waiting"
-                        ? "secondary"
-                        : "outline"
-                  }
-                >
-                  {game.status}
-                </Badge>
+        <DashboardShell>
+          <div className="container mx-auto max-w-7xl space-y-6">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-bold">Game Room</h1>
+                  <Badge
+                    variant={
+                      game.status === "active"
+                        ? "default"
+                        : game.status === "waiting"
+                          ? "secondary"
+                          : "outline"
+                    }
+                  >
+                    {game.status}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <p className="text-muted-foreground">
+                    Room Code:{" "}
+                    <span className="font-mono font-bold text-foreground">
+                      {roomCode}
+                    </span>
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopyRoomCode}
+                    className="h-7"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
-              <p className="text-muted-foreground mt-1">
-                Room Code:{" "}
-                <span className="font-mono font-bold">{roomCode}</span>
-              </p>
+
+              <div className="flex items-center gap-2">
+                <Link href="/">
+                  <Button variant="outline" onClick={playClickSound}>
+                    <Home className="mr-2 h-4 w-4" />
+                    Home
+                  </Button>
+                </Link>
+                {isGameCompleted && (
+                  <Button onClick={handleRematch}>
+                    <RotateCw className="mr-2 h-4 w-4" />
+                    Rematch
+                  </Button>
+                )}
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleCopyRoomCode}>
-                <Copy className="mr-2 h-4 w-4" />
-                {isCopied ? "Copied!" : "Copy Code"}
-              </Button>
-              <Link href="/">
-                <Button variant="outline" size="sm">
-                  <Home className="mr-2 h-4 w-4" />
-                  Home
-                </Button>
-              </Link>
-            </div>
-          </div>
 
-          {/* Main content */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Left sidebar - Players */}
-            <div className="lg:col-span-1 space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <Users className="mr-2 h-5 w-5" />
-                    Players ({game.players.length}/{game.maxPlayers})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {game.players.map((player) => (
-                    <div
-                      key={player.userId}
-                      className={`flex items-center gap-3 p-3 rounded-lg border ${
-                        game.currentPlayer === player.userId
-                          ? "bg-primary/10 border-primary"
-                          : "bg-muted/50"
-                      }`}
-                    >
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
-                        {player.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate">
-                          {player.name}
-                          {player.userId === currentUser?.clerkId && " (You)"}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {player.symbol}
-                          {player.isHost && " • Host"}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-
-                  {game.status === "waiting" && (
-                    <div className="pt-4 border-t">
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Waiting for {game.maxPlayers - game.players.length} more
-                        player(s)...
-                      </p>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleCopyRoomCode}
-                          className="flex-1"
-                        >
-                          {isCopied ? "Copied!" : "Share"}
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={handleLeaveGame}
-                        >
-                          Leave
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {game.status === "completed" && (
+            {/* Main Game Area */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Players & Game Info */}
+              <div className="lg:col-span-1 space-y-6">
+                {/* Players Section */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Game Over!</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Users className="h-5 w-5" />
+                        Players
+                      </CardTitle>
+                      <Badge variant="outline">
+                        {game.players.length} / {game.maxPlayers}
+                      </Badge>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {game.winner === "draw" ? (
-                      <p className="text-center text-lg">It's a draw! 🤝</p>
-                    ) : (
-                      <p className="text-center text-lg">
-                        {
-                          game.players.find((p) => p.userId === game.winner)
-                            ?.name
-                        }{" "}
-                        wins! 🎉
-                      </p>
-                    )}
-                    <div className="flex flex-col gap-2">
-                      <Button onClick={handleRematch} className="w-full">
-                        <RotateCw className="mr-2 h-4 w-4" />
-                        Rematch
-                      </Button>
-                      <Link href="/">
-                        <Button variant="outline" className="w-full">
-                          <Home className="mr-2 h-4 w-4" />
-                          Home
-                        </Button>
-                      </Link>
+                    {game.players.map((player) => {
+                      const isCurrentPlayer =
+                        player.userId === currentUser?.clerkId;
+                      const isActive = game.currentPlayer === player.userId;
+
+                      return (
+                        <button
+                          key={player.userId}
+                          onClick={() => handlePlayerClick(player.userId)}
+                          className={cn(
+                            "w-full p-3 rounded-lg border-2 transition-all hover:shadow-md",
+                            isActive
+                              ? "border-blue-500 bg-blue-500/10"
+                              : "border-border hover:border-blue-300",
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <UserAvatar
+                                avatarId={player.avatarId}
+                                username={player.name}
+                                size="md"
+                              />
+                              {isActive && (
+                                <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-blue-500 animate-pulse" />
+                              )}
+                            </div>
+                            <div className="flex-1 text-left">
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold">
+                                  {player.name}
+                                  {isCurrentPlayer && " (You)"}
+                                </p>
+                                {player.isHost && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="h-5 text-xs"
+                                  >
+                                    Host
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Playing as {player.symbol}
+                              </p>
+                            </div>
+                            {isActive && (
+                              <Clock className="h-4 w-4 text-blue-500 animate-pulse" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {/* Waiting for players */}
+                    {game.players.length < game.maxPlayers &&
+                      game.status === "waiting" && (
+                        <div className="p-4 border-2 border-dashed rounded-lg text-center">
+                          <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-muted-foreground" />
+                          <p className="text-sm text-muted-foreground">
+                            Waiting for players...
+                          </p>
+                        </div>
+                      )}
+                  </CardContent>
+                </Card>
+
+                {/* Game Info */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Game Info</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Board Size
+                      </span>
+                      <Badge variant="outline">
+                        {game.boardSize}x{game.boardSize}
+                      </Badge>
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Game Mode
+                      </span>
+                      <Badge variant="outline">{game.gameMode}</Badge>
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Max Players
+                      </span>
+                      <Badge variant="outline">{game.maxPlayers}</Badge>
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Private Room
+                      </span>
+                      <Badge variant={game.isPrivate ? "default" : "secondary"}>
+                        {game.isPrivate ? "Yes" : "No"}
+                      </Badge>
                     </div>
                   </CardContent>
                 </Card>
-              )}
-            </div>
 
-            {/* Center - Game board */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <div className="text-center">
-                    {game.status === "waiting" ? (
-                      <p className="text-lg font-semibold text-muted-foreground">
-                        Waiting for players...
-                      </p>
-                    ) : game.status === "completed" ? (
-                      <p className="text-lg font-semibold text-green-600">
-                        Game completed!
-                      </p>
-                    ) : (
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Current Turn
+                {/* Leave Game Button */}
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={handleLeaveGame}
+                >
+                  Leave Game
+                </Button>
+              </div>
+
+              {/* Center Column - Game Board */}
+              <div className="lg:col-span-1">
+                <Card>
+                  <CardContent className="p-6">
+                    {/* Game Status */}
+                    {isGameActive && (
+                      <div className="mb-6 text-center">
+                        {isMyTurn ? (
+                          <div className="p-4 bg-green-500/10 border border-green-500/50 rounded-lg">
+                            <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                              Your Turn! ✨
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="p-4 bg-blue-500/10 border border-blue-500/50 rounded-lg">
+                            <p className="text-lg font-medium text-blue-600 dark:text-blue-400">
+                              Waiting for opponent...
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Waiting Status */}
+                    {game.status === "waiting" && (
+                      <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg text-center">
+                        <p className="text-lg font-medium text-yellow-600 dark:text-yellow-400">
+                          Waiting for more players...
                         </p>
-                        <p className="text-lg font-bold">
-                          {
-                            game.players.find(
-                              (p) => p.userId === game.currentPlayer,
-                            )?.name
-                          }
-                          {isMyTurn && " (Your turn!)"}
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {game.players.length} / {game.maxPlayers} joined
                         </p>
                       </div>
                     )}
-                  </div>
-                </CardHeader>
-                <CardContent className="flex items-center justify-center p-6">
-                  <GameBoard
-                    board={game.board}
-                    onCellClick={(pos) => {
-                      console.log("GameBoard cell clicked:", pos);
-                      handleMove(pos);
-                    }}
-                    disabled={
-                      !isMyTurn || game.status !== "active" || !currentPlayer
-                    }
-                    boardSize={game.boardSize}
-                    winningLine={null}
-                  />
-                </CardContent>
-                {game.status === "waiting" && (
-                  <CardContent className="pt-0">
-                    <div className="text-center">
-                      <p className="text-muted-foreground">
-                        Share the room code with friends to start playing!
-                      </p>
+
+                    {/* Game Completed */}
+                    {isGameCompleted && getWinnerInfo() && (
+                      <div className="mb-6 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/50 rounded-lg text-center">
+                        <Trophy className="h-12 w-12 mx-auto mb-2 text-yellow-500" />
+                        <p
+                          className={cn(
+                            "text-2xl font-bold",
+                            getWinnerInfo()?.color,
+                          )}
+                        >
+                          {getWinnerInfo()?.text}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Game Board */}
+                    <div className="flex items-center justify-center">
+                      <GameBoard
+                        board={game.board}
+                        boardSize={game.boardSize}
+                        onCellClick={handleMove}
+                        disabled={!isMyTurn || !isGameActive}
+                        currentPlayer={currentPlayer?.symbol || ""}
+                      />
                     </div>
                   </CardContent>
-                )}
-              </Card>
-            </div>
+                </Card>
+              </div>
 
-            {/* Right sidebar - Chat */}
-            <div className="lg:col-span-1">
-              {game.settings.chatEnabled ? (
-                <Card className="h-full">
+              {/* Right Column - Chat */}
+              <div className="lg:col-span-1">
+                <Card className="h-[600px] flex flex-col">
                   <CardHeader>
-                    <CardTitle className="flex items-center text-lg">
-                      <MessageSquare className="mr-2 h-5 w-5" />
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5" />
                       Chat
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="h-[calc(100%-80px)]">
-                    <div className="flex flex-col h-full">
-                      {/* Messages */}
-                      <div className="flex-1 overflow-y-auto space-y-2 p-3 bg-muted/20 rounded-lg mb-4">
+                  <CardContent className="flex-1 flex flex-col p-0">
+                    {/* Messages */}
+                    <ScrollArea className="flex-1 px-4">
+                      <div className="space-y-3 py-4">
                         {chatMessages && chatMessages.length > 0 ? (
-                          chatMessages.map((msg) => (
-                            <div
-                              key={msg._id}
-                              className={`flex ${
-                                msg.userId === currentUser?.clerkId
-                                  ? "justify-end"
-                                  : "justify-start"
-                              }`}
-                            >
+                          chatMessages.map((msg) => {
+                            const isOwnMessage =
+                              msg.userId === currentUser?.clerkId;
+                            return (
                               <div
-                                className={`max-w-[85%] rounded-lg p-2 ${
-                                  msg.userId === currentUser?.clerkId
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted"
-                                }`}
+                                key={msg._id}
+                                className={cn(
+                                  "flex gap-2",
+                                  isOwnMessage
+                                    ? "flex-row-reverse"
+                                    : "flex-row",
+                                )}
                               >
-                                <p className="text-xs font-semibold mb-0.5">
-                                  {msg.username}
-                                </p>
-                                <p className="text-sm break-words">
-                                  {msg.message}
-                                </p>
+                                <UserAvatar
+                                  avatarId={msg.avatarId}
+                                  username={msg.username}
+                                  size="sm"
+                                  className="flex-shrink-0"
+                                />
+                                <div
+                                  className={cn(
+                                    "max-w-[80%]",
+                                    isOwnMessage ? "items-end" : "items-start",
+                                  )}
+                                >
+                                  <p
+                                    className={cn(
+                                      "text-xs font-medium mb-1",
+                                      isOwnMessage ? "text-right" : "text-left",
+                                    )}
+                                  >
+                                    {msg.username}
+                                  </p>
+                                  <div
+                                    className={cn(
+                                      "rounded-lg px-3 py-2",
+                                      isOwnMessage
+                                        ? "bg-blue-500 text-white"
+                                        : "bg-muted",
+                                    )}
+                                  >
+                                    <p className="text-sm break-words">
+                                      {msg.message}
+                                    </p>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {new Date(msg.createdAt).toLocaleTimeString(
+                                      [],
+                                      {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      },
+                                    )}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          ))
+                            );
+                          })
                         ) : (
-                          <p className="text-center text-muted-foreground text-sm">
-                            No messages yet
-                          </p>
+                          <div className="text-center py-8">
+                            <MessageSquare className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
+                            <p className="text-sm text-muted-foreground">
+                              No messages yet. Start the conversation!
+                            </p>
+                          </div>
                         )}
                       </div>
+                    </ScrollArea>
 
-                      {/* Input */}
+                    {/* Message Input */}
+                    <div className="p-4 border-t">
                       <div className="flex gap-2">
-                        <input
-                          type="text"
+                        <Input
                           value={chatInput}
                           onChange={(e) => setChatInput(e.target.value)}
                           onKeyPress={(e) => {
@@ -479,45 +619,150 @@ export default function GamePage() {
                             }
                           }}
                           placeholder="Type a message..."
-                          className="flex-1 px-3 py-2 rounded-md border bg-background text-sm"
                           disabled={
-                            isSendingMessage || game.status !== "active"
+                            !game.settings.chatEnabled || isSendingMessage
                           }
                         />
                         <Button
                           onClick={handleSendMessage}
                           disabled={
                             !chatInput.trim() ||
-                            isSendingMessage ||
-                            game.status !== "active"
+                            !game.settings.chatEnabled ||
+                            isSendingMessage
                           }
-                          size="sm"
+                          size="icon"
                         >
                           {isSendingMessage ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            "Send"
+                            <Send className="h-4 w-4" />
                           )}
                         </Button>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ) : (
-                <Card className="h-full">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Chat Disabled</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground text-sm">
-                      Chat has been disabled for this game.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              </div>
             </div>
           </div>
-        </div>
+
+          {/* Player Card Dialog */}
+          <Dialog open={playerCardOpen} onOpenChange={setPlayerCardOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Player Profile</DialogTitle>
+              </DialogHeader>
+              {selectedPlayerId && (
+                <div className="space-y-6">
+                  {/* Player Info */}
+                  <div className="flex items-center gap-4">
+                    <UserAvatar
+                      avatarId={
+                        game.players.find((p) => p.userId === selectedPlayerId)
+                          ?.avatarId || 1
+                      }
+                      username={
+                        game.players.find((p) => p.userId === selectedPlayerId)
+                          ?.name || "Player"
+                      }
+                      size="xl"
+                      className="border-4 border-blue-500/20"
+                    />
+                    <div>
+                      <h3 className="text-2xl font-bold">
+                        {game.players.find((p) => p.userId === selectedPlayerId)
+                          ?.name || "Player"}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Playing as{" "}
+                        {game.players.find((p) => p.userId === selectedPlayerId)
+                          ?.symbol || "?"}
+                      </p>
+                      {game.players.find((p) => p.userId === selectedPlayerId)
+                        ?.isHost && <Badge className="mt-2">Host</Badge>}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Player Stats */}
+                  {selectedPlayerStats ? (
+                    <div className="space-y-4">
+                      <h4 className="font-semibold">Statistics</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-center p-4 bg-green-500/10 rounded-lg">
+                          <Trophy className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                          <p className="text-2xl font-bold">
+                            {selectedPlayerStats.wins}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Wins</p>
+                        </div>
+
+                        <div className="text-center p-4 bg-red-500/10 rounded-lg">
+                          <Target className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                          <p className="text-2xl font-bold">
+                            {selectedPlayerStats.losses}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Losses
+                          </p>
+                        </div>
+
+                        <div className="text-center p-4 bg-blue-500/10 rounded-lg">
+                          <Zap className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                          <p className="text-2xl font-bold">
+                            {selectedPlayerStats.winRate.toFixed(0)}%
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Win Rate
+                          </p>
+                        </div>
+
+                        <div className="text-center p-4 bg-purple-500/10 rounded-lg">
+                          <Award className="h-8 w-8 text-purple-500 mx-auto mb-2" />
+                          <p className="text-2xl font-bold">
+                            {selectedPlayerStats.tournamentWins}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Tournaments
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Total Games</span>
+                          <span className="font-bold">
+                            {selectedPlayerStats.totalGames}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Current Streak</span>
+                          <span className="font-bold">
+                            {selectedPlayerStats.currentStreak}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Highest Streak</span>
+                          <span className="font-bold">
+                            {selectedPlayerStats.highestStreak}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        Loading stats...
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        </DashboardShell>
       </Authenticated>
     </>
   );

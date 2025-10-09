@@ -14,7 +14,8 @@ import Link from "next/link";
 import { Bot, Users, Grid3X3, Trophy, Crown, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSoundEffects } from "@/lib/sound-manager";
-import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { SignInButton, SignUpButton } from "@clerk/nextjs";
+import { UserProfileButton } from "@/components/user-profile-button";
 import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
@@ -96,7 +97,7 @@ function AuthenticatedContent({
   return (
     <div className="container mx-auto max-w-6xl">
       <div className="flex justify-end mb-4">
-        <UserButton afterSignOutUrl="/" />
+        <UserProfileButton />
       </div>
 
       {/* Hero Section */}
