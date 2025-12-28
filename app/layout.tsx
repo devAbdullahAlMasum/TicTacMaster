@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeSystemProvider } from "@/hooks/use-theme-system"
 import { Toaster } from "@/components/ui/toaster"
 import { SettingsProvider } from "@/hooks/use-settings"
 import { GlobalSoundProvider } from "@/components/global-sound-provider"
@@ -24,10 +25,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <SettingsProvider>
-            <GlobalSoundProvider>{children}</GlobalSoundProvider>
-            <Toaster />
-          </SettingsProvider>
+          <ThemeSystemProvider defaultTheme="light">
+            <SettingsProvider>
+              <GlobalSoundProvider>{children}</GlobalSoundProvider>
+              <Toaster />
+            </SettingsProvider>
+          </ThemeSystemProvider>
         </ThemeProvider>
       </body>
     </html>

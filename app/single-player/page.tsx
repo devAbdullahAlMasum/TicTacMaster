@@ -1,20 +1,22 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { EnhancedButton } from "@/components/ui/enhanced-button"
+import { EnhancedCard, EnhancedCardContent, EnhancedCardDescription, EnhancedCardHeader, EnhancedCardTitle } from "@/components/ui/enhanced-card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { DashboardShell } from "@/components/dashboard-shell"
-import { GameBoard } from "@/components/game-board"
+import { EnhancedDashboardShell } from "@/components/enhanced-dashboard-shell"
+import { EnhancedGameBoard } from "@/components/enhanced-game-board"
 import { PlayerInfo } from "@/components/player-info"
 import { GameStatus } from "@/components/game-status"
 import { ArrowRight, Bot, RotateCcw, Home, Trophy, Zap, Play, Sparkles } from "lucide-react"
 import { useSettings } from "@/hooks/use-settings"
 import { useSoundEffects } from "@/lib/sound-manager"
+import { useThemeSystem } from "@/hooks/use-theme-system"
 import { AIPlayer, type Difficulty } from "@/lib/ai-player"
+import { cn } from "@/lib/utils"
 
 type Player = {
   id: string
@@ -38,6 +40,7 @@ type GameState = {
 export default function SinglePlayerPage() {
   const { settings } = useSettings()
   const { playMoveSound, playWinSound, playDrawSound } = useSoundEffects()
+  const { getStyles, currentTheme } = useThemeSystem()
 
   const [gameState, setGameState] = useState<GameState>({
     board: [],
@@ -301,7 +304,7 @@ export default function SinglePlayerPage() {
 
   if (!gameState.gameStarted) {
     return (
-      <DashboardShell>
+      <EnhancedDashboardShell>
         <div className="w-full h-full flex flex-col justify-center items-center p-4 py-8">
           <div className="w-full max-w-lg mx-auto">
             {/* Header Section */}
@@ -332,15 +335,21 @@ export default function SinglePlayerPage() {
             </div>
 
             {/* Setup Card */}
-            <Card className="backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border-0 shadow-2xl">
-              <CardHeader className="text-center pb-6">
-                <CardTitle className="text-xl sm:text-2xl font-bold flex items-center justify-center gap-2 sm:gap-3">
-                  <Play className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+            <EnhancedCard
+              variant="elevated"
+              className={cn(
+                "backdrop-blur-sm border-0 shadow-2xl",
+                getStyles("card.base")
+              )}
+            >
+              <EnhancedCardHeader className="text-center pb-6">
+                <EnhancedCardTitle className="text-xl sm:text-2xl font-bold flex items-center justify-center gap-2 sm:gap-3">
+                  <Play className={cn("w-5 h-5 sm:w-6 sm:h-6", getStyles("text.accent"))} />
                   Game Setup
-                </CardTitle>
-                <CardDescription className="text-base sm:text-lg">Configure your game against the AI</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6 sm:space-y-8 px-4 sm:px-8 pb-6 sm:pb-8">
+                </EnhancedCardTitle>
+                <EnhancedCardDescription className="text-base sm:text-lg">Configure your game against the AI</EnhancedCardDescription>
+              </EnhancedCardHeader>
+              <EnhancedCardContent className="space-y-6 sm:space-y-8 px-4 sm:px-8 pb-6 sm:pb-8">
                 {/* Player Info */}
                 <div className="space-y-3 sm:space-y-4">
                   <Label className="text-sm sm:text-base font-semibold">Your Player Info</Label>
@@ -418,30 +427,32 @@ export default function SinglePlayerPage() {
                 <div className="space-y-3 sm:space-y-4">
                   <Label className="text-sm sm:text-base font-semibold">Your Symbol</Label>
                   <div className="flex gap-4 justify-center">
-                    <Button
+                    <EnhancedButton
                       type="button"
                       variant={setupData.playerSymbol === "X" ? "default" : "outline"}
-                      className={`h-12 sm:h-14 w-20 sm:w-24 text-lg sm:text-xl font-bold ${
+                      className={cn(
+                        "h-12 sm:h-14 w-20 sm:w-24 text-lg sm:text-xl font-bold",
                         setupData.playerSymbol === "X"
-                          ? "bg-blue-600 hover:bg-blue-700 text-white"
-                          : "border-2 hover:border-blue-500 hover:text-blue-600"
-                      }`}
+                          ? getStyles("button.primary.base")
+                          : getStyles("button.secondary.base")
+                      )}
                       onClick={() => setSetupData({ ...setupData, playerSymbol: "X" })}
                     >
                       X
-                    </Button>
-                    <Button
+                    </EnhancedButton>
+                    <EnhancedButton
                       type="button"
                       variant={setupData.playerSymbol === "O" ? "default" : "outline"}
-                      className={`h-12 sm:h-14 w-20 sm:w-24 text-lg sm:text-xl font-bold ${
+                      className={cn(
+                        "h-12 sm:h-14 w-20 sm:w-24 text-lg sm:text-xl font-bold",
                         setupData.playerSymbol === "O"
-                          ? "bg-blue-600 hover:bg-blue-700 text-white"
-                          : "border-2 hover:border-blue-500 hover:text-blue-600"
-                      }`}
+                          ? getStyles("button.primary.base")
+                          : getStyles("button.secondary.base")
+                      )}
                       onClick={() => setSetupData({ ...setupData, playerSymbol: "O" })}
                     >
                       O
-                    </Button>
+                    </EnhancedButton>
                   </div>
                   <p className="text-center text-xs sm:text-sm text-muted-foreground">
                     {setupData.playerSymbol === "X" ? "You'll go first" : "AI will go first"}
@@ -449,24 +460,30 @@ export default function SinglePlayerPage() {
                 </div>
 
                 {/* Start Button */}
-                <Button
+                <EnhancedButton
                   onClick={startGame}
-                  className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 touch-manipulation"
+                  className={cn(
+                    "w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 touch-manipulation",
+                    getStyles("animations.transition")
+                  )}
+                  icon={<Play className="h-4 w-4 sm:h-5 sm:w-5" />}
+                  iconPosition="left"
                 >
-                  <Play className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5" />
-                  Start Game
-                  <ArrowRight className="ml-2 sm:ml-3 h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-              </CardContent>
-            </Card>
+                  <span className="flex items-center gap-2 sm:gap-3">
+                    Start Game
+                    <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </span>
+                </EnhancedButton>
+              </EnhancedCardContent>
+            </EnhancedCard>
           </div>
         </div>
-      </DashboardShell>
+      </EnhancedDashboardShell>
     )
   }
 
   return (
-    <DashboardShell>
+    <EnhancedDashboardShell>
       <div className="w-full h-full flex flex-col justify-center items-center p-4 py-6">
         <div className="w-full max-w-lg mx-auto space-y-4 sm:space-y-6">
           {/* Game Header */}
@@ -475,10 +492,15 @@ export default function SinglePlayerPage() {
               <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 text-transparent bg-clip-text">
                 Single Player Game
               </h1>
-              <Button variant="outline" onClick={backToSetup} size="sm" className="touch-manipulation">
-                <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+              <EnhancedButton
+                variant="outline"
+                onClick={backToSetup}
+                size="sm"
+                className="touch-manipulation"
+                icon={<Home className="h-3 w-3 sm:h-4 sm:w-4" />}
+              >
                 Setup
-              </Button>
+              </EnhancedButton>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground">
               {gameState.boardSize}×{gameState.boardSize} board • {setupData.difficulty} difficulty
@@ -528,7 +550,7 @@ export default function SinglePlayerPage() {
           {/* Game Board */}
           <div className="flex justify-center">
             <div className="w-full max-w-xs sm:max-w-sm">
-              <GameBoard
+              <EnhancedGameBoard
                 board={gameState.board}
                 onCellClick={makeMove}
                 winnerLine={gameState.winner?.line}
@@ -545,28 +567,35 @@ export default function SinglePlayerPage() {
           {/* Play Again Button */}
           {(gameState.winner || gameState.isDraw) && (
             <div className="flex justify-center">
-              <Button
+              <EnhancedButton
                 onClick={playAgain}
-                className="h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95 touch-manipulation"
+                className={cn(
+                  "h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95 touch-manipulation",
+                  getStyles("animations.transition")
+                )}
+                icon={<RotateCcw className="h-3 w-3 sm:h-4 sm:w-4" />}
               >
-                <RotateCcw className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                Play Again
-                <Sparkles className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
+                <span className="flex items-center gap-2">
+                  Play Again
+                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+                </span>
+              </EnhancedButton>
             </div>
           )}
 
           {/* Current Turn Indicator */}
           {!gameState.winner && !gameState.isDraw && currentPlayer && (
             <div className="flex justify-center">
-              <Card
-                className={`w-full max-w-sm ${
+              <EnhancedCard
+                className={cn(
+                  "w-full max-w-sm shadow-lg",
                   currentPlayer.isAI
                     ? "bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/50 dark:to-blue-950/50 border-purple-200 dark:border-purple-800"
-                    : "bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/50 dark:to-green-950/50 border-blue-200 dark:border-blue-800"
-                } shadow-lg`}
+                    : "bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/50 dark:to-green-950/50 border-blue-200 dark:border-blue-800",
+                  getStyles("card.base")
+                )}
               >
-                <CardContent className="p-3 sm:p-4 text-center">
+                <EnhancedCardContent className="p-3 sm:p-4 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <Zap
                       className={`h-4 w-4 sm:h-5 sm:w-5 ${
@@ -593,12 +622,12 @@ export default function SinglePlayerPage() {
                   <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                     {currentPlayer.isAI ? "Please wait..." : "Tap any empty cell to make your move"}
                   </p>
-                </CardContent>
-              </Card>
+                </EnhancedCardContent>
+              </EnhancedCard>
             </div>
           )}
         </div>
       </div>
-    </DashboardShell>
+    </EnhancedDashboardShell>
   )
 }

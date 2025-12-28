@@ -3,18 +3,18 @@ import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { useSettings } from "@/hooks/use-settings"
-
+import { useThemeSystem } from "@/hooks/use-theme-system"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const { setThemeName } = useThemeSystem()
   const { updateSettings } = useSettings()
-  
 
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark"
     setTheme(newTheme)
+    setThemeName(newTheme as "light" | "dark")
     updateSettings({ theme: newTheme as "light" | "dark" | "system" })
-    
   }
 
   return (
